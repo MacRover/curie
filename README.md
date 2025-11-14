@@ -1,2 +1,2 @@
 # v3-rover
-McMaster Mars Rover V3 (2025-present)
+Main codebase for McMaster Mars Rover Team's V3 Rover
