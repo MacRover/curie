@@ -1,0 +1,7 @@
+# Default initial positions for Reduced_CAD_Model_For_Software's ros2_control fake system
+
+initial_positions:
+  Bicep Joint: 0
+  Wrist roll joint: 0
+  forearm_joint: 0
+  shoulder_joint: 0

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="Reduced_CAD_Model_For_Software">
+    <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+
+    <!-- Import Reduced_CAD_Model_For_Software urdf file -->
+    <xacro:include filename="$(find Reduced_CAD_Model_For_Software)/urdf/Reduced_CAD_Model_For_Software.urdf" />
+
+    <!-- Import control_xacro -->
+    <xacro:include filename="Reduced_CAD_Model_For_Software.ros2_control.xacro" />
+
+
+    <xacro:Reduced_CAD_Model_For_Software_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+
+</robot>
