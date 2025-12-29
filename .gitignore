@@ -1,0 +1,114 @@
+###############################################
+# General
+###############################################
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+###############################################
+# STM32 / Embedded build artifacts
+###############################################
+# Common build directories
+Debug/
+build/
+out/
+
+# Object files and dependency files
+*.o
+*.obj
+*.d
+*.su
+
+# Binaries / firmware images
+*.elf
+*.bin
+*.hex
+*.srec
+*.lss
+*.map
+*.lst
+*.list
+*.axf
+
+# Coverage and intermediate
+*.gcno
+*.gcda
+
+# Static libraries
+*.a
+
+# Keep CubeMX project and linker scripts tracked
+# (Do NOT ignore .ioc or *.ld)
+# *.ioc
+# *.ld
+
+###############################################
+# STM32 IDE metadata (Eclipse/STM32CubeIDE/TrueSTUDIO)
+###############################################
+.settings/
+*.mxproject
+*.launch
+.externalToolBuilders/
+
+###############################################
+# Keil uVision
+###############################################
+RTE/
+Listings/
+Objects/
+*.uvgui*
+*.uvopt*
+# Project files may be kept if you use Keil, comment out to track
+# *.uvprojx
+# *.uvproj
+
+###############################################
+# IAR Embedded Workbench (EWARM)
+###############################################
+EWARM/Settings/
+EWARM/Obj/
+EWARM/Exe/
+# Project/workspace files may be kept if you use IAR, comment out to track
+# *.ewp
+# *.eww
+
+###############################################
+# ROS 2 (colcon/ament) workspaces
+###############################################
+build/
+install/
+log/
+.colcon/*
+colcon_cache/
+
+# ROS-generated test results
+test_results/
+
+# CMake/Bazel (if present)
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+*.cmake
+
+###############################################
+# Misc
+###############################################
+*.iml
+*.tmp
+tmp/
