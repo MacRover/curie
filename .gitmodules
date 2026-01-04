@@ -1,0 +1,3 @@
+[submodule "spark_mmrt"]
+	path = curie_ws/src/curie_hw_control/lib/spark_mmrt
+	url = https://github.com/MacRover/spark_mmrt.git

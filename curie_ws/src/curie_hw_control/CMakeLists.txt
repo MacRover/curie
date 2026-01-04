@@ -11,16 +11,31 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# Creating and exporting hardware library to other packages
+add_library(
+  hw_lib SHARED 
+  lib/spark_mmrt/src/device/SparkMax.cpp
+  lib/spark_mmrt/src/frames/SparkFrames.cpp
+  lib/spark_mmrt/src/can/SocketCanTransport.cpp
+
+  interfaces/spark_drive_hardware.cpp
+)
+target_include_directories(hw_lib PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/spark_mmrt/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interfaces>
+  $<INSTALL_INTERFACE:include>)
+ament_export_libraries(hw_lib)
+ament_export_include_directories(interfaces)
+
+add_executable(test_sparkmax src/test_sparkmax.cpp)
+ament_target_dependencies(test_sparkmax rclcpp std_msgs)
+target_include_directories(test_sparkmax PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/spark_mmrt/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(test_sparkmax hw_lib)
+
+install(TARGETS test_sparkmax
+  DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
