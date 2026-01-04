@@ -27,13 +27,51 @@ uint8_t hardware::SparkDriveInterface::shutdown()
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::read(std::shared_ptr<void> data)
+uint8_t hardware::SparkDriveInterface::read(void* data)
 {
+    std::lock_guard<std::mutex> lock(read_mtx);
+    SparkDriveStatus* status_data = static_cast<SparkDriveStatus*>(data);
+
+    if (status_data == nullptr)
+    {
+        return -1;
+    }
+    status_data->fl_status = front_left_.getStatus2();
+    status_data->fr_status = front_right_.getStatus2();
+    status_data->ml_status = mid_left_.getStatus2();
+    status_data->mr_status = mid_right_.getStatus2();
+    status_data->bl_status = back_left_.getStatus2();
+    status_data->br_status = back_right_.getStatus2();
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::write(std::shared_ptr<void> data)
+uint8_t hardware::SparkDriveInterface::write(void* data)
 {
+    SparkDriveData* drive_data = static_cast<SparkDriveData*>(data);
+
+    if (drive_data == nullptr)
+    {
+        return -1;
+    }
+
+    front_left_.setVelocity(drive_data->fl_velocity);
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+    front_right_.setVelocity(drive_data->fr_velocity);
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+    mid_left_.setVelocity(drive_data->ml_velocity);
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+    mid_right_.setVelocity(drive_data->mr_velocity);
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+    back_left_.setVelocity(drive_data->bl_velocity);
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+    back_right_.setVelocity(drive_data->br_velocity);
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+
     return 0;
 }
 

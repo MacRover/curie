@@ -17,12 +17,12 @@ TestSparkMax::TestSparkMax(std::string name) : Node(name), spark_max_(can_transp
 void TestSparkMax::_callback(const std_msgs::msg::Float32::SharedPtr msg)
 {
     float duty_cycle = msg->data;
-    spark_max_.SetDutyCycle(duty_cycle);
+    spark_max_.setDutyCycle(duty_cycle);
 }
 
 void TestSparkMax::_timer_callback(void)
 {
-    spark_max_.Heartbeat();
+    spark_max_.heartbeat();
 }
 
 int main(int argc, char ** argv)

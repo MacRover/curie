@@ -20,12 +20,12 @@ namespace hardware
          * @brief read data from hardware
          * @return 0 if read was successful, negative error code otherwise (<= 0)
          */
-        virtual uint8_t read(std::shared_ptr<void> data) = 0;
+        virtual uint8_t read(void* data) = 0;
         /**
          * @brief write data to hardware
          * @return 0 if write was successful, negative error code otherwise (<= 0)
          */
-        virtual uint8_t write(std::shared_ptr<void> data) = 0;
+        virtual uint8_t write(void* data) = 0;
         /**
          * @brief main loop for hardware interface
          */

@@ -24,6 +24,26 @@ typedef enum : uint8_t
     BACK_RIGHT = 6
 } SparkDriveID;
 
+typedef struct
+{
+    float fl_velocity;
+    float fr_velocity;
+    float ml_velocity;
+    float mr_velocity;
+    float bl_velocity;
+    float br_velocity;
+} SparkDriveData;
+
+typedef struct
+{
+    Status2 fl_status;
+    Status2 fr_status;
+    Status2 ml_status;
+    Status2 mr_status;
+    Status2 bl_status;
+    Status2 br_status;
+} SparkDriveStatus;
+
 namespace hardware
 {
     class SparkDriveInterface : public HardwareInterface
@@ -35,9 +55,9 @@ namespace hardware
 
         uint8_t shutdown() override;
 
-        uint8_t read(std::shared_ptr<void> data) override;
+        uint8_t read(void* data) override;
 
-        uint8_t write(std::shared_ptr<void> data) override;
+        uint8_t write(void* data) override;
         
         void run() override;
 
