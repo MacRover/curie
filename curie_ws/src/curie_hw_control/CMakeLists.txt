@@ -13,7 +13,7 @@ find_package(geometry_msgs REQUIRED)
 
 # Creating and exporting hardware library to other packages
 add_library(
-  hw_lib SHARED 
+  hw_lib STATIC 
   lib/spark_mmrt/src/device/SparkMax.cpp
   lib/spark_mmrt/src/frames/SparkFrames.cpp
   lib/spark_mmrt/src/can/SocketCanTransport.cpp

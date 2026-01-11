@@ -32,7 +32,7 @@ uint8_t hardware::SparkDriveInterface::read(void* data)
     std::lock_guard<std::mutex> lock(read_mtx);
     SparkDriveStatus* status_data = static_cast<SparkDriveStatus*>(data);
 
-    if (status_data == nullptr)
+    if (status_data == nullptr || !can_transport_.isOpen())
     {
         return -1;
     }
@@ -49,7 +49,7 @@ uint8_t hardware::SparkDriveInterface::write(void* data)
 {
     SparkDriveData* drive_data = static_cast<SparkDriveData*>(data);
 
-    if (drive_data == nullptr)
+    if (drive_data == nullptr || !can_transport_.isOpen())
     {
         return -1;
     }
