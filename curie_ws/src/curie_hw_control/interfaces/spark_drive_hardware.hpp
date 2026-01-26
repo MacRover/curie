@@ -32,7 +32,7 @@ typedef struct
     float mr_velocity;
     float bl_velocity;
     float br_velocity;
-} SparkDriveData;
+} SparkDriveCmd;
 
 typedef struct
 {

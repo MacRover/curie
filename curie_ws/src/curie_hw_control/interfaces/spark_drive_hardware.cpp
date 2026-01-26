@@ -47,30 +47,29 @@ uint8_t hardware::SparkDriveInterface::read(void* data)
 
 uint8_t hardware::SparkDriveInterface::write(void* data)
 {
-    SparkDriveData* drive_data = static_cast<SparkDriveData*>(data);
+    SparkDriveCmd* drive_cmd = static_cast<SparkDriveCmd*>(data);
 
-    if (drive_data == nullptr || !can_transport_.isOpen())
+    if (drive_cmd == nullptr || !can_transport_.isOpen())
     {
         return -1;
     }
 
-    front_left_.setVelocity(drive_data->fl_velocity);
+    front_left_.setVelocity(drive_cmd->fl_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    front_right_.setVelocity(drive_data->fr_velocity);
+    front_right_.setVelocity(drive_cmd->fr_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    mid_left_.setVelocity(drive_data->ml_velocity);
+    mid_left_.setVelocity(drive_cmd->ml_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    mid_right_.setVelocity(drive_data->mr_velocity);
+    mid_right_.setVelocity(drive_cmd->mr_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    back_left_.setVelocity(drive_data->bl_velocity);
+    back_left_.setVelocity(drive_cmd->bl_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    back_right_.setVelocity(drive_data->br_velocity);
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    back_right_.setVelocity(drive_cmd->br_velocity);
 
     return 0;
 }
