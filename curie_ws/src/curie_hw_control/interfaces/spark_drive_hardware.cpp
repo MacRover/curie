@@ -1,4 +1,4 @@
-#include "spark_drive_hardware.hpp"
+#include "curie_hw_control/spark_drive_hardware.hpp"
 
 hardware::SparkDriveInterface::SparkDriveInterface() : 
     front_left_(can_transport_, FRONT_LEFT),
@@ -11,7 +11,7 @@ hardware::SparkDriveInterface::SparkDriveInterface() :
 
 }
 
-uint8_t hardware::SparkDriveInterface::initialize()
+int8_t hardware::SparkDriveInterface::initialize()
 {
     can_transport_.open(CAN_INTERFACE);
     if (!can_transport_.isOpen())
@@ -21,13 +21,13 @@ uint8_t hardware::SparkDriveInterface::initialize()
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::shutdown()
+int8_t hardware::SparkDriveInterface::shutdown()
 {
     can_transport_.close();
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::read(void* data)
+int8_t hardware::SparkDriveInterface::read(void* data)
 {
     std::lock_guard<std::mutex> lock(read_mtx);
     SparkDriveStatus* status_data = static_cast<SparkDriveStatus*>(data);
@@ -45,7 +45,7 @@ uint8_t hardware::SparkDriveInterface::read(void* data)
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::write(void* data)
+int8_t hardware::SparkDriveInterface::write(void* data)
 {
     SparkDriveCmd* drive_cmd = static_cast<SparkDriveCmd*>(data);
 

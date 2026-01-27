@@ -11,8 +11,7 @@
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "rclcpp/rclcpp.hpp"
-// From curie_hw_control
-#include "spark_drive_hardware.hpp"
+#include "curie_hw_control/spark_drive_hardware.hpp"
 
 namespace curie_drive_controller
 {
@@ -43,7 +42,7 @@ namespace curie_drive_controller
         ~CurieDiffDriveController() override;
 
     private:
-        std::thread t_controller_;
+        std::thread drive_hw_thread_;
         hardware::SparkDriveInterface drive_hardware_;
         std::vector<double> wheel_velocities_;
         std::vector<double> wheel_positions_;

@@ -11,11 +11,11 @@ hardware_interface::CallbackReturn CurieDiffDriveController::on_init(
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    // if (drive_hardware_.initialize() < 0)
-    // {
-    //     return hardware_interface::CallbackReturn::ERROR;
-    // }
-    // t_controller_ = std::thread(&hardware::SparkDriveInterface::run, &drive_hardware_);
+    if (drive_hardware_.initialize() < 0)
+    {
+        return hardware_interface::CallbackReturn::ERROR;
+    }
+    drive_hw_thread_ = std::thread(&hardware::SparkDriveInterface::run, &drive_hardware_);
     wheel_velocities_.resize(info_.joints.size(), 0.0);
     wheel_positions_.resize(info_.joints.size(), 0.0);
     hw_commands_.resize(info_.joints.size(), 0.0);
@@ -76,16 +76,23 @@ hardware_interface::return_type CurieDiffDriveController::write(
 {
     (void)time;
     (void)period;
+
+    drive_commands_.fl_velocity = hw_commands_[0];
+    drive_commands_.fr_velocity = hw_commands_[1];
+    drive_commands_.ml_velocity = 0.0;
+    drive_commands_.mr_velocity = 0.0;
+    drive_commands_.bl_velocity = 0.0;
+    drive_commands_.br_velocity = 0.0;
+
+    drive_hardware_.write(static_cast<void*>(&drive_commands_));
+
     return hardware_interface::return_type::OK;
 }
 
 CurieDiffDriveController::~CurieDiffDriveController()
 {
-    // drive_hardware_.shutdown();
-    // if (t_controller_.joinable())
-    // {
-    //     t_controller_.join();
-    // }
+    drive_hardware_.shutdown();
+    drive_hw_thread_.join();
 }
 
 }  // namespace curie_drive_controller

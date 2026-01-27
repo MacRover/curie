@@ -51,13 +51,13 @@ namespace hardware
     public:
         SparkDriveInterface();
 
-        uint8_t initialize() override;
+        int8_t initialize() override;
 
-        uint8_t shutdown() override;
+        int8_t shutdown() override;
 
-        uint8_t read(void* data) override;
+        int8_t read(void* data) override;
 
-        uint8_t write(void* data) override;
+        int8_t write(void* data) override;
         
         void run() override;
 
