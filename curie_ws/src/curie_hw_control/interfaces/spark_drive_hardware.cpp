@@ -47,7 +47,7 @@ int8_t hardware::SparkDriveInterface::read(void* data)
 
 int8_t hardware::SparkDriveInterface::write(void* data)
 {
-    SparkDriveCmd* drive_cmd = static_cast<SparkDriveCmd*>(data);
+    SparkDriveCommand* drive_cmd = static_cast<SparkDriveCommand*>(data);
 
     if (drive_cmd == nullptr || !can_transport_.isOpen())
     {

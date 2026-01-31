@@ -11,8 +11,8 @@
 #include "spark_mmrt/can/SocketCanTransport.hpp"
 #include "spark_mmrt/device/SparkMax.hpp"
 
-#define CAN_INTERFACE "can0"
-// #define CAN_INTERFACE "vcan0" // For testing
+// #define CAN_INTERFACE "can0"
+#define CAN_INTERFACE "vcan0" // For testing
 
 typedef enum : uint8_t
 {
@@ -32,7 +32,7 @@ typedef struct
     float mr_velocity;
     float bl_velocity;
     float br_velocity;
-} SparkDriveCmd;
+} SparkDriveCommand;
 
 typedef struct
 {

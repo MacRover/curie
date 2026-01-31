@@ -64,6 +64,7 @@ def generate_launch_description():
         remappings=[
             ("~/robot_description", "/robot_description"),
             ("/mock_diffbot_base_controller/cmd_vel", "/cmd_vel"),
+            ("/mock_diffbot_base_controller/odom", "/odom"),
         ],
     )
     robot_state_pub_node = Node(

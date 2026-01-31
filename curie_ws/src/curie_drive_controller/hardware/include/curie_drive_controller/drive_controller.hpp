@@ -48,7 +48,7 @@ namespace curie_drive_controller
         std::vector<double> wheel_positions_;
         std::vector<double> hw_commands_;
 
-        SparkDriveCmd drive_commands_;
+        SparkDriveCommand drive_commands_;
         SparkDriveStatus drive_status_;
     };
 }

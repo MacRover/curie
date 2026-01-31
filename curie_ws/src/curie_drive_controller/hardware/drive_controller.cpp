@@ -1,4 +1,7 @@
 #include "curie_drive_controller/drive_controller.hpp"
+#include <math.h>
+
+#define RPM_TO_RADPS (2.0f * M_PI / 60.0f)
 
 namespace curie_drive_controller
 {
@@ -68,6 +71,22 @@ hardware_interface::return_type CurieDiffDriveController::read(
 {
     (void)time;
     (void)period;
+
+    int8_t ret = drive_hardware_.read(static_cast<void*>(&drive_status_));
+
+    if (ret < 0)
+    {
+        return hardware_interface::return_type::ERROR;
+    }
+    
+    // Convert from RPM to rad/s
+    wheel_velocities_[0] = drive_status_.fl_status.primaryEncoderVelocity * RPM_TO_RADPS;
+    wheel_velocities_[1] = drive_status_.fr_status.primaryEncoderVelocity * RPM_TO_RADPS;
+    wheel_velocities_[2] = drive_status_.ml_status.primaryEncoderVelocity * RPM_TO_RADPS;
+    wheel_velocities_[3] = drive_status_.mr_status.primaryEncoderVelocity * RPM_TO_RADPS;
+    wheel_velocities_[4] = drive_status_.bl_status.primaryEncoderVelocity * RPM_TO_RADPS;
+    wheel_velocities_[5] = drive_status_.br_status.primaryEncoderVelocity * RPM_TO_RADPS;
+
     return hardware_interface::return_type::OK;
 }
 
@@ -77,12 +96,12 @@ hardware_interface::return_type CurieDiffDriveController::write(
     (void)time;
     (void)period;
 
-    drive_commands_.fl_velocity = hw_commands_[0];
-    drive_commands_.fr_velocity = hw_commands_[1];
-    drive_commands_.ml_velocity = 0.0;
-    drive_commands_.mr_velocity = 0.0;
-    drive_commands_.bl_velocity = 0.0;
-    drive_commands_.br_velocity = 0.0;
+    drive_commands_.fl_velocity = hw_commands_[0] / RPM_TO_RADPS;
+    drive_commands_.fr_velocity = hw_commands_[1] / RPM_TO_RADPS;
+    drive_commands_.ml_velocity = hw_commands_[2] / RPM_TO_RADPS;
+    drive_commands_.mr_velocity = hw_commands_[3] / RPM_TO_RADPS;
+    drive_commands_.bl_velocity = hw_commands_[4] / RPM_TO_RADPS;
+    drive_commands_.br_velocity = hw_commands_[5] / RPM_TO_RADPS;
 
     drive_hardware_.write(static_cast<void*>(&drive_commands_));
 
