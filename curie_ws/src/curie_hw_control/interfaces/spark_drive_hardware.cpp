@@ -13,7 +13,7 @@ hardware::SparkDriveInterface::SparkDriveInterface() :
 
 int8_t hardware::SparkDriveInterface::initialize()
 {
-    can_transport_.open(CAN_INTERFACE);
+    can_transport_.open(CAN_INTERFACE, SPARK_DRIVETRAIN);
     if (!can_transport_.isOpen())
     {
         return -1;

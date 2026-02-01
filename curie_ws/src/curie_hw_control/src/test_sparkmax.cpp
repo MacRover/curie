@@ -2,7 +2,7 @@
 
 TestSparkMax::TestSparkMax(std::string name) : Node(name), spark_max_(can_transport_, 1)
 {
-    can_transport_.open("can0");
+    can_transport_.open("can0", SPARK_DRIVETRAIN);
     sub_ = this->create_subscription<std_msgs::msg::Float32>(
         "sparkmax/duty_cycle_cmd",
         10,

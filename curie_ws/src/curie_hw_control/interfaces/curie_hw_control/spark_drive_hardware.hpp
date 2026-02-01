@@ -11,17 +11,17 @@
 #include "spark_mmrt/can/SocketCanTransport.hpp"
 #include "spark_mmrt/device/SparkMax.hpp"
 
-// #define CAN_INTERFACE "can0"
-#define CAN_INTERFACE "vcan0" // For testing
+#define CAN_INTERFACE "can0"
+// #define CAN_INTERFACE "vcan0" // For testing
 
 typedef enum : uint8_t
 {
-    FRONT_LEFT = 1,
-    FRONT_RIGHT = 2,
-    MID_LEFT = 3,
-    MID_RIGHT = 4,
-    BACK_LEFT = 5,
-    BACK_RIGHT = 6
+    FRONT_LEFT = (SPARK_DRIVETRAIN << 4) | 1,
+    FRONT_RIGHT = (SPARK_DRIVETRAIN << 4) | 2,
+    MID_LEFT = (SPARK_DRIVETRAIN << 4) | 3,
+    MID_RIGHT = (SPARK_DRIVETRAIN << 4) | 4,
+    BACK_LEFT = (SPARK_DRIVETRAIN << 4) | 5,
+    BACK_RIGHT = (SPARK_DRIVETRAIN << 4) | 6
 } SparkDriveID;
 
 typedef struct
