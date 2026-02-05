@@ -5,7 +5,7 @@ import os
 
 def generate_launch_description():
 
-    pkg_path = get_package_share_directory('arm_visualizer')
+    pkg_path = get_package_share_directory('curie_robot_description')
     urdf_path = os.path.join(pkg_path, 'urdf', 'arm.urdf')
 
     with open(urdf_path, 'r') as infp:

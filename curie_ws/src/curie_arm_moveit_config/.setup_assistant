@@ -1,6 +1,6 @@
 moveit_setup_assistant_config:
   urdf:
-    package: arm_visualizer
+    package: curie_robot_description
     relative_path: urdf/arm.urdf
   srdf:
     relative_path: config/arm.srdf
