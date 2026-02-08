@@ -1,4 +1,4 @@
-#include "spark_drive_hardware.hpp"
+#include "curie_hw_control/spark_drive_hardware.hpp"
 
 hardware::SparkDriveInterface::SparkDriveInterface() : 
     front_left_(can_transport_, FRONT_LEFT),
@@ -11,9 +11,9 @@ hardware::SparkDriveInterface::SparkDriveInterface() :
 
 }
 
-uint8_t hardware::SparkDriveInterface::initialize()
+int8_t hardware::SparkDriveInterface::initialize()
 {
-    can_transport_.open(CAN_INTERFACE);
+    can_transport_.open(CAN_INTERFACE, SPARK_DRIVETRAIN);
     if (!can_transport_.isOpen())
     {
         return -1;
@@ -21,13 +21,13 @@ uint8_t hardware::SparkDriveInterface::initialize()
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::shutdown()
+int8_t hardware::SparkDriveInterface::shutdown()
 {
     can_transport_.close();
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::read(void* data)
+int8_t hardware::SparkDriveInterface::read(void* data)
 {
     std::lock_guard<std::mutex> lock(read_mtx);
     SparkDriveStatus* status_data = static_cast<SparkDriveStatus*>(data);
@@ -45,32 +45,31 @@ uint8_t hardware::SparkDriveInterface::read(void* data)
     return 0;
 }
 
-uint8_t hardware::SparkDriveInterface::write(void* data)
+int8_t hardware::SparkDriveInterface::write(void* data)
 {
-    SparkDriveData* drive_data = static_cast<SparkDriveData*>(data);
+    SparkDriveCommand* drive_cmd = static_cast<SparkDriveCommand*>(data);
 
-    if (drive_data == nullptr || !can_transport_.isOpen())
+    if (drive_cmd == nullptr || !can_transport_.isOpen())
     {
         return -1;
     }
 
-    front_left_.setVelocity(drive_data->fl_velocity);
+    front_left_.setVelocity(drive_cmd->fl_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    front_right_.setVelocity(drive_data->fr_velocity);
+    front_right_.setVelocity(drive_cmd->fr_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    mid_left_.setVelocity(drive_data->ml_velocity);
+    mid_left_.setVelocity(drive_cmd->ml_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    mid_right_.setVelocity(drive_data->mr_velocity);
+    mid_right_.setVelocity(drive_cmd->mr_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    back_left_.setVelocity(drive_data->bl_velocity);
+    back_left_.setVelocity(drive_cmd->bl_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    back_right_.setVelocity(drive_data->br_velocity);
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    back_right_.setVelocity(drive_cmd->br_velocity);
 
     return 0;
 }
