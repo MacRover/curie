@@ -2,6 +2,7 @@
 #include <math.h>
 
 #define RPM_TO_RADPS (2.0f * M_PI / 60.0f)
+#define VELOCITY_DEADZONE 0.1f
 
 namespace curie_drive_controller
 {
@@ -22,6 +23,8 @@ hardware_interface::CallbackReturn CurieDiffDriveController::on_init(
     wheel_velocities_.resize(info_.joints.size(), 0.0);
     wheel_positions_.resize(info_.joints.size(), 0.0);
     hw_commands_.resize(info_.joints.size(), 0.0);
+
+    wheel_state_ = true;
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -96,14 +99,34 @@ hardware_interface::return_type CurieDiffDriveController::write(
     (void)time;
     (void)period;
 
-    drive_commands_.fl_velocity = hw_commands_[0] / RPM_TO_RADPS;
-    drive_commands_.fr_velocity = hw_commands_[1] / RPM_TO_RADPS;
-    drive_commands_.ml_velocity = hw_commands_[2] / RPM_TO_RADPS;
-    drive_commands_.mr_velocity = hw_commands_[3] / RPM_TO_RADPS;
-    drive_commands_.bl_velocity = hw_commands_[4] / RPM_TO_RADPS;
-    drive_commands_.br_velocity = hw_commands_[5] / RPM_TO_RADPS;
+    // Only send commands when necessary (i.e. when the vehicle is moving)
+    bool vehicle_moving_ = false;
+    for (size_t i = 0; i < hw_commands_.size(); i++)
+    {
+        if (std::abs(hw_commands_[i]) > VELOCITY_DEADZONE)
+        {
+            vehicle_moving_ = true;
+            wheel_state_ = true;
+            break;
+        }
+    }
 
-    drive_hardware_.write(static_cast<void*>(&drive_commands_));
+    if (wheel_state_)
+    {
+        drive_commands_.fl_velocity = (vehicle_moving_) ? hw_commands_[0] / RPM_TO_RADPS : 0.0f;
+        drive_commands_.fr_velocity = (vehicle_moving_) ? hw_commands_[1] / RPM_TO_RADPS : 0.0f;
+        drive_commands_.ml_velocity = (vehicle_moving_) ? hw_commands_[2] / RPM_TO_RADPS : 0.0f;
+        drive_commands_.mr_velocity = (vehicle_moving_) ? hw_commands_[3] / RPM_TO_RADPS : 0.0f;
+        drive_commands_.bl_velocity = (vehicle_moving_) ? hw_commands_[4] / RPM_TO_RADPS : 0.0f;
+        drive_commands_.br_velocity = (vehicle_moving_) ? hw_commands_[5] / RPM_TO_RADPS : 0.0f;
+
+        drive_hardware_.write(static_cast<void*>(&drive_commands_));
+
+        if (!vehicle_moving_)
+        {
+            wheel_state_ = false;
+        }
+    }
 
     return hardware_interface::return_type::OK;
 }

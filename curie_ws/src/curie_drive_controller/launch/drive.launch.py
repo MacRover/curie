@@ -14,21 +14,13 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "gui",
-            default_value="true",
-            description="Start RViz2 automatically with this launch file.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "use_mock_hardware",
             default_value="false",
-            description="Start robot with mock hardware mirroring command to its states.",
+            description="Start RViz2 automatically with this launch file.",
         )
     )
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
-    use_mock_hardware = LaunchConfiguration("use_mock_hardware")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -39,8 +31,7 @@ def generate_launch_description():
                 [FindPackageShare("curie_drive_controller"), "config", "mock_diffbot.urdf.xacro"]
             ),
             " ",
-            "use_mock_hardware:=",
-            use_mock_hardware,
+            "use_mock_hardware:=False",
         ]
     )
     robot_description = {"robot_description": robot_description_content}

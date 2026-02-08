@@ -50,6 +50,8 @@ namespace curie_drive_controller
 
         SparkDriveCommand drive_commands_;
         SparkDriveStatus drive_status_;
+
+        bool wheel_state_;
     };
 }
 #endif  // CURIE_DRIVE_CONTROLLER__DRIVE_CONTROLLER_HPP_
