@@ -9,10 +9,15 @@ void loop() {
   float ph;
   int ec;
 
-  tem = random(0, 10000) / 100.0;
-  hum = random(0, 10000) / 100.0;
-  ph = random(0, 10000) / 100.0;
-  ec = random(0, 10000) / 100.0;
+  // tem = random(0, 10000) / 100.0;
+  // hum = random(0, 10000) / 100.0;
+  // ph = random(0, 10000) / 100.0;
+  // ec = random(0, 10000) / 100.0;
+
+  tem = 1;
+  hum = 1;
+  ph = 1;
+  ec = 1;
 
   // Send over UART
 

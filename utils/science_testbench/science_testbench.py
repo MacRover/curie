@@ -6,14 +6,118 @@ import datetime
 import csv
 
 """
+Where press is specified, press and hold
+
 
 Press t to see temperature graph
 Press h to see humidity graph
 Press p to see pH graph
 press e to see ec graph
 
+Press o to change an offset
+Press s to change a scale factor
+
 
 """
+
+# CHANGE THE NUMBER OF MOVING AVERAGE POINTS HERE
+
+MOVING_AVERAGE_POINTS = 20
+
+# First time constants (you can also change these to change offsets)
+
+TEMP_OFFSET_BASE = 0
+HUMIDITY_OFFSET_BASE = 0
+PH_OFFSET_BASE = 0
+EC_OFFSET_BASE = 0
+
+TEMP_SCALING_BASE = 1
+HUMIDITY_SCALING_BASE = 1
+PH_SCALING_BASE = 1
+EC_SCALING_BASE = 1
+
+
+
+temp_offset = TEMP_OFFSET_BASE
+ph_offset = PH_OFFSET_BASE
+humidity_offset = HUMIDITY_OFFSET_BASE
+ec_offset = EC_OFFSET_BASE
+
+temp_scaling = TEMP_SCALING_BASE
+ph_scaling = PH_SCALING_BASE
+humidity_scaling = HUMIDITY_SCALING_BASE
+ec_scaling = EC_SCALING_BASE
+
+def change_offset(temp_offset, humidity_offset, ph_offset, ec_offset):
+
+    print("Enter a command")
+    print("1: Change temperature offset")
+    print("2: Change humidity offset")
+    print("3: Change pH offset")
+    print("4: Change electrical conductivity offset")
+        
+
+    cmd = int(input(""))
+
+
+    if (cmd == 1):
+        temp_offset = float(input("enter value: "))
+
+    elif (cmd == 2):
+        humidity_offset = float(input("enter value: "))
+
+    elif (cmd == 3):
+        ph_offset = float(input("enter value: "))
+
+    elif (cmd == 4):
+        ec_offset = float(input("enter value: "))
+
+    return temp_offset, humidity_offset, ph_offset, ec_offset
+    
+
+
+
+def change_scaling(temp_scaling, humidity_scaling, ph_scaling, ec_scaling):
+
+    print("Enter a command")
+    print("1: Change temperature scaling")
+    print("2: Change humidity scaling")
+    print("3: Change pH scaling")
+    print("4: Change electrical conductivity scaling")
+    
+
+    cmd = int(input(""))
+
+    if (cmd == 1):
+        temp_scaling = float(input("enter value: "))
+
+    elif (cmd == 2):
+        humidity_scaling = float(input("enter value: "))
+
+    elif (cmd == 3):
+        ph_scaling = float(input("enter value: "))
+
+    elif (cmd == 4):
+        ec_scaling = float(input("enter value: "))
+
+    return temp_scaling, humidity_scaling, ph_scaling, ec_scaling
+
+
+def offset_and_scale(scale, offset, value):
+
+    return scale*value + offset
+
+
+def moving_average(array, window):
+
+    # Calculates the moving average very straightforwardly
+
+    if (len(array)) < window:
+        return sum(array) / len(array)
+    else:
+        return sum(array[-window:]) / window # Return the last window points
+
+
 
 
 # Functions from Arduino
@@ -152,6 +256,12 @@ try:
         #         pass  # ignore malformed lines
 
         hum_val, temp_val, ec_val, ph_val = read_humiture_ecph(ser, Com)
+
+        temp_val = offset_and_scale(temp_scaling, temp_offset, temp_val)
+        hum_val = offset_and_scale(humidity_scaling, humidity_offset, hum_val)
+        ph_val = offset_and_scale(ph_scaling, ph_offset, ph_val)
+        ec_val = offset_and_scale(ec_scaling, ec_offset, ec_val)
+
         print("Temperature: " + str(temp_val) + " | Humidity: " + str(hum_val) + " | pH: " + str(ec_val) + " | Electrical Conductivity: " + str(ph_val))
 
         # Append it all to the lists
@@ -216,6 +326,13 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+
+
+        if keyboard.is_pressed("o") and time.time() - last_plot > 0.5:
+            temp_offset, humidity_offset, ph_offset, ec_offset = change_offset(temp_offset, humidity_offset, ph_offset, ec_offset)
+
+        if keyboard.is_pressed("s") and time.time() - last_plot > 0.5:
+            temp_scaling, humidity_scaling, ph_scaling, ec_scaling = change_scaling(temp_scaling, humidity_scaling, ph_scaling, ec_scaling)
 
 except KeyboardInterrupt:
     print("Exiting...")
