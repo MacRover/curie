@@ -201,13 +201,13 @@ def read_humiture_ecph(ser, command: bytes):
 
 
 # ---------------- UART Setup ----------------
-PORT = "COM11"  # Change this to your COM port
+PORT = "COM5"  # Change this to your COM port
 BAUD = 9600
 BYTESIZE = 8
 PARITY = serial.PARITY_NONE
 STOPBITS = 1
 TIMEOUT = 0
-ser = serial.Serial(port = PORT, baud = BAUD, bytesize = BYTESIZE, party = PARITY, stopbits = STOPBITS, timeout = TIMEOUT)
+ser = serial.Serial(port = PORT, baudrate = BAUD, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS, timeout = TIMEOUT)
 
 # Original 8 byte command
 
@@ -262,7 +262,14 @@ try:
         ph_val = offset_and_scale(ph_scaling, ph_offset, ph_val)
         ec_val = offset_and_scale(ec_scaling, ec_offset, ec_val)
 
-        print("Temperature: " + str(temp_val) + " | Humidity: " + str(hum_val) + " | pH: " + str(ec_val) + " | Electrical Conductivity: " + str(ph_val))
+        """
+
+        Uncomment these two lines to view instantaneous values
+        
+
+        """
+        # print("Temperature: " + str(temp_val) + " | Humidity: " + str(hum_val) + " | pH: " + str(ec_val) + " | Electrical Conductivity: " + str(ph_val))
+
 
         # Append it all to the lists
 
@@ -270,6 +277,23 @@ try:
         hum.append(hum_val)
         ec.append(ec_val)
         ph.append(ph_val)
+
+        avg_temp = moving_average(temp, MOVING_AVERAGE_POINTS)
+        avg_hum = moving_average(hum, MOVING_AVERAGE_POINTS)
+        avg_ph = moving_average(ph, MOVING_AVERAGE_POINTS)
+        avg_ec = moving_average(ec, MOVING_AVERAGE_POINTS)
+
+
+        """
+
+        Uncomment this line to view moving averages
+        
+        """
+
+        print("Temperature: " + str(avg_temp) + " | Humidity: " + str(avg_hum) + " | pH: " + str(avg_ph) + " | Electrical Conductivity: " + str(avg_ec))
+
+
+
         now = time.time() - start
         x.append(now)
 
