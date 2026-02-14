@@ -16,12 +16,12 @@
 
 typedef enum : uint8_t
 {
-    FRONT_LEFT = 1,
-    FRONT_RIGHT = 2,
-    MID_LEFT = 3,
-    MID_RIGHT = 4,
-    BACK_LEFT = 5,
-    BACK_RIGHT = 6
+    FRONT_LEFT = (SPARK_DRIVETRAIN << 4) | 1,
+    FRONT_RIGHT = (SPARK_DRIVETRAIN << 4) | 2,
+    MID_LEFT = (SPARK_DRIVETRAIN << 4) | 3,
+    MID_RIGHT = (SPARK_DRIVETRAIN << 4) | 4,
+    BACK_LEFT = (SPARK_DRIVETRAIN << 4) | 5,
+    BACK_RIGHT = (SPARK_DRIVETRAIN << 4) | 6
 } SparkDriveID;
 
 typedef struct
@@ -32,7 +32,7 @@ typedef struct
     float mr_velocity;
     float bl_velocity;
     float br_velocity;
-} SparkDriveData;
+} SparkDriveCommand;
 
 typedef struct
 {
@@ -51,13 +51,13 @@ namespace hardware
     public:
         SparkDriveInterface();
 
-        uint8_t initialize() override;
+        int8_t initialize() override;
 
-        uint8_t shutdown() override;
+        int8_t shutdown() override;
 
-        uint8_t read(void* data) override;
+        int8_t read(void* data) override;
 
-        uint8_t write(void* data) override;
+        int8_t write(void* data) override;
         
         void run() override;
 

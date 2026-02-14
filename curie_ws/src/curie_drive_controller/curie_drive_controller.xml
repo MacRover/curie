@@ -1,0 +1,9 @@
+<library path="curie_drive_controller">
+  <class name="curie_drive_controller/CurieDiffDriveController"
+         type="curie_drive_controller::CurieDiffDriveController"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+        A differential drive hardware interface and ros controller for Curie.
+    </description>
+  </class>
+</library>
