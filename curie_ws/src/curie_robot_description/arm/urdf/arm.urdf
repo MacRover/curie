@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="arm">
+  <link name="world"/>
+  <link
+    name="Baseplate_Part">
+    <inertial>
+      <origin
+        xyz="0.0314355367866302 0.0593135400508119 0.137105298580493"
+        rpy="0 0 0" />
+      <mass
+        value="0.144089467104784" />
+      <inertia
+        ixx="0.000572165456461745"
+        ixy="-1.86487987163127E-21"
+        ixz="-3.19632660171926E-21"
+        iyy="0.000738669236937651"
+        iyz="1.2304635185752E-21"
+        izz="0.000167999664039735" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Baseplate_Part.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Baseplate_Part.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child link="Baseplate_Part"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link
+    name="Shoulder">
+    <inertial>
+      <origin
+        xyz="-0.000715904680960371 0.115948468031078 0.00812192398664138"
+        rpy="0 0 0" />
+      <mass
+        value="0.200258048039819" />
+      <inertia
+        ixx="0.000455288262255939"
+        ixy="8.42535610844894E-07"
+        ixz="-6.61580139352353E-06"
+        iyy="0.000141303075248095"
+        iyz="-9.56153749509961E-06"
+        izz="0.000529769493184708" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Shoulder.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Shoulder.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_joint"
+    type="continuous">
+    <origin
+      xyz="0.0314355367866296 -0.167112129632076 0.0215333450507679"
+      rpy="1.5707963267949 0 0.0124137542544794" />
+    <parent
+      link="Baseplate_Part" />
+    <child
+      link="Shoulder" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="Bicep_Linkage">
+    <inertial>
+      <origin
+        xyz="0.0100139189510432 0.0430160982895761 0.0800268042863693"
+        rpy="0 0 0" />
+      <mass
+        value="0.710553792219542" />
+      <inertia
+        ixx="0.00175286867498736"
+        ixy="-0.00051770489038863"
+        ixz="-3.2246429380841E-05"
+        iyy="0.000600488983010965"
+        iyz="-4.21684509402196E-05"
+        izz="0.00213116568368076" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Bicep_Linkage.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Bicep_Linkage.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Bicep_Joint"
+    type="continuous">
+    <origin
+      xyz="0 0.254 0"
+      rpy="0.00812251575960651 0.000375080547518232 -0.0922896907892129" />
+    <parent
+      link="Shoulder" />
+    <child
+      link="Bicep_Linkage" />
+    <axis
+      xyz="0.0877948496902314 0 -0.996138576889716" />
+  </joint>
+  <link
+    name="Forearm_Linkage">
+    <inertial>
+      <origin
+        xyz="0.0394325704715627 -0.198393295644367 0.0308669299713195"
+        rpy="0 0 0" />
+      <mass
+        value="0.219147216076021" />
+      <inertia
+        ixx="0.00169438030646619"
+        ixy="4.59283261635274E-05"
+        ixz="-5.55030464684521E-07"
+        iyy="8.27117610068623E-05"
+        iyz="2.74379304292093E-06"
+        izz="0.00170437655432851" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Forearm_Linkage.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Forearm_Linkage.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Forearm_Joint"
+    type="continuous">
+    <origin
+      xyz="0.205747654962669 0.439277543744026 0.0430310161664866"
+      rpy="-0.0832050094036542 0.0319809506650058 1.23725552365871" />
+    <parent
+      link="Bicep_Linkage" />
+    <child
+      link="Forearm_Linkage" />
+    <axis
+      xyz="0.0605805514570394 0 -0.998163311680589" />
+  </joint>
+  <link
+    name="Wrist_Pitch">
+    <inertial>
+      <origin
+        xyz="-0.0138523212718659 0.0636510542969802 0.0885404926741277"
+        rpy="0 0 0" />
+      <mass
+        value="0.224814880452066" />
+      <inertia
+        ixx="8.70710738360255E-05"
+        ixy="2.05724646735683E-06"
+        ixz="5.0396547907612E-07"
+        iyy="7.38013935980191E-05"
+        iyz="-1.00050832078055E-06"
+        izz="7.28230797573464E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Wrist_Pitch.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Wrist_Pitch.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_pitch_joint"
+    type="fixed">
+    <origin
+      xyz="0.0614760326108716 -0.449236652255744 0.0948418360911152"
+      rpy="-2.41679788371581 0.00131623687607705 1.59248518727762" />
+    <parent
+      link="Forearm_Linkage" />
+    <child
+      link="Wrist_Pitch" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="Wrist_Roll">
+    <inertial>
+      <origin
+        xyz="-0.0461506740704483 -0.00130412593875406 0.000652222569832731"
+        rpy="0 0 0" />
+      <mass
+        value="0.160457867162933" />
+      <inertia
+        ixx="5.21314297079899E-05"
+        ixy="2.05383025504808E-06"
+        ixz="5.02330913848901E-07"
+        iyy="5.37038895290569E-05"
+        iyz="-6.0540027156568E-06"
+        izz="5.09699562463387E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Wrist_Roll.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://curie_robot_description/arm/meshes/Wrist_Roll.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_roll_joint"
+    type="continuous">
+    <origin
+      xyz="-0.0404563209238247 -0.0124767317892557 0.0124767317892556"
+      rpy="-2.03938401887035 0.785398163397445 -1.57079632679489" />
+    <parent
+      link="Wrist_Pitch" />
+    <child
+      link="Wrist_Roll" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+</robot>
