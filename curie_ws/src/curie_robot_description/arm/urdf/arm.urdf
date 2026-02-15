@@ -27,7 +27,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Baseplate_Part.STL" />
+          filename="package://curie_robot_description/arm/meshes/Baseplate_Part.STL" />
       </geometry>
       <material
         name="">
@@ -41,7 +41,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Baseplate_Part.STL" />
+          filename="package://curie_robot_description/arm/meshes/Baseplate_Part.STL" />
       </geometry>
     </collision>
   </link>
@@ -72,7 +72,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Shoulder.STL" />
+          filename="package://curie_robot_description/arm/meshes/Shoulder.STL" />
       </geometry>
       <material
         name="">
@@ -86,7 +86,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Shoulder.STL" />
+          filename="package://curie_robot_description/arm/meshes/Shoulder.STL" />
       </geometry>
     </collision>
   </link>
@@ -125,7 +125,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Bicep_Linkage.STL" />
+          filename="package://curie_robot_description/arm/meshes/Bicep_Linkage.STL" />
       </geometry>
       <material
         name="">
@@ -139,7 +139,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Bicep_Linkage.STL" />
+          filename="package://curie_robot_description/arm/meshes/Bicep_Linkage.STL" />
       </geometry>
     </collision>
   </link>
@@ -178,7 +178,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Forearm_Linkage.STL" />
+          filename="package://curie_robot_description/arm/meshes/Forearm_Linkage.STL" />
       </geometry>
       <material
         name="">
@@ -192,7 +192,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Forearm_Linkage.STL" />
+          filename="package://curie_robot_description/arm/meshes/Forearm_Linkage.STL" />
       </geometry>
     </collision>
   </link>
@@ -231,7 +231,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Wrist_Pitch.STL" />
+          filename="package://curie_robot_description/arm/meshes/Wrist_Pitch.STL" />
       </geometry>
       <material
         name="">
@@ -245,7 +245,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Wrist_Pitch.STL" />
+          filename="package://curie_robot_description/arm/meshes/Wrist_Pitch.STL" />
       </geometry>
     </collision>
   </link>
@@ -284,7 +284,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Wrist_Roll.STL" />
+          filename="package://curie_robot_description/arm/meshes/Wrist_Roll.STL" />
       </geometry>
       <material
         name="">
@@ -298,7 +298,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://curie_robot_description/meshes/Wrist_Roll.STL" />
+          filename="package://curie_robot_description/arm/meshes/Wrist_Roll.STL" />
       </geometry>
     </collision>
   </link>

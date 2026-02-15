@@ -6,10 +6,14 @@ import os
 def generate_launch_description():
 
     pkg_path = get_package_share_directory('curie_robot_description')
-    urdf_path = os.path.join(pkg_path, 'urdf', 'arm.urdf')
+    urdf_path = os.path.join(pkg_path, 'arm', 'urdf', 'arm.urdf')
 
     with open(urdf_path, 'r') as infp:
         robot_desc = infp.read()
+
+    rviz_config_file = os.path.join(
+        get_package_share_directory("curie_robot_description"), "arm", "rviz", "arm.rviz"
+    )
 
     return LaunchDescription([
         Node(
@@ -20,7 +24,8 @@ def generate_launch_description():
         Node(
             package='rviz2',
             executable='rviz2',
-            output='screen'
+            output='screen',
+            arguments=['-d', rviz_config_file]
         ),
         Node(
             package='joint_state_publisher_gui',

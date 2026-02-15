@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 
 SET(robot_descriptions 
     mock_diffbot
+    arm
 )
 
 foreach(robot_description ${robot_descriptions})
