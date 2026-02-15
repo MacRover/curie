@@ -9,13 +9,13 @@ import csv
 Where press is specified, press and hold
 
 
-Press t to see temperature graph
-Press h to see humidity graph
-Press p to see pH graph
-press e to see ec graph
+Press and hold t to see temperature graph
+Press and hold h to see humidity graph
+Press and hold p to see pH graph
+press and hold e to see ec graph
 
-Press o to change an offset
-Press s to change a scale factor
+Press and hold o to change an offset
+Press and hold s to change a scale factor
 
 
 """
