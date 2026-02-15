@@ -142,6 +142,7 @@ with open(csv_file, mode="a", newline = "") as f:
     writer.writerow(["Time (s)", "Temperature", "Humidity", "pH", "Electrical Conductivity"])
 
 print("Listening... press 'a' to plot temperature snapshot.")
+plot_total_open_time = 0
 
 try:
     while True:
@@ -170,23 +171,23 @@ try:
                     hum.append(b)
                     ph.append(c)
                     ec.append(d)
-                    now = time.time() - start
+                    now = time.time() - start - plot_total_open_time
                     x.append(now)
 
                     # print("Offsetted Vaues")
 
-                    print("Values: ")
+                    # print("Values: ")
                     print("Temperature: " + str(a) + " | Humidity: " + str(b) + " | pH: " + str(c) + " | Electrical Conductivity: " + str(d))
 
 
-                    print("Moving averages:")
+                    # print("Moving averages:")
 
                     avg_temp = moving_average(temp, MOVING_AVERAGE_POINTS)
                     avg_hum = moving_average(hum, MOVING_AVERAGE_POINTS)
                     avg_ph = moving_average(ph, MOVING_AVERAGE_POINTS)
                     avg_ec = moving_average(ec, MOVING_AVERAGE_POINTS)
 
-                    print("Temperature: " + str(avg_temp) + " | Humidity: " + str(avg_hum) + " | pH: " + str(avg_ph) + " | Electrical Conductivity: " + str(avg_ec))
+                    # print("Temperature: " + str(avg_temp) + " | Humidity: " + str(avg_hum) + " | pH: " + str(avg_ph) + " | Electrical Conductivity: " + str(avg_ec))
 
 
 
@@ -198,7 +199,7 @@ try:
             except ValueError:
                 pass  # ignore malformed lines
 
-        # ---------- Check for 't' press ----------
+        # ---------- Check for 't' press ---------
         if keyboard.is_pressed("t") and time.time() - last_plot > 0.5:
             last_plot = time.time()
             # Pause main loop and show snapshot plot
@@ -210,6 +211,8 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += last_plot - plot_close_time
 
         if keyboard.is_pressed("h") and time.time() - last_plot > 0.5:
             last_plot = time.time()
@@ -222,6 +225,8 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += last_plot - plot_close_time
 
         if keyboard.is_pressed("p") and time.time() - last_plot > 0.5:
             last_plot = time.time()
@@ -234,6 +239,8 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += last_plot - plot_close_time
 
         if keyboard.is_pressed("e") and time.time() - last_plot > 0.5:
             last_plot = time.time()
@@ -246,13 +253,21 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += last_plot - plot_close_time
 
 
         if keyboard.is_pressed("o") and time.time() - last_plot > 0.5:
+            offset_select_time = time.time()
             temp_offset, humidity_offset, ph_offset, ec_offset = change_offset(temp_offset, humidity_offset, ph_offset, ec_offset)
+            offset_close_time = time.time()
+            plot_total_open_time += offset_close_time - offset_select_time
 
         if keyboard.is_pressed("s") and time.time() - last_plot > 0.5:
+            offset_select_time = time.time()
             temp_scaling, humidity_scaling, ph_scaling, ec_scaling = change_scaling(temp_scaling, humidity_scaling, ph_scaling, ec_scaling)
+            offset_close_time = time.time()
+            plot_total_open_time += offset_close_time - offset_select_time
 
         
 

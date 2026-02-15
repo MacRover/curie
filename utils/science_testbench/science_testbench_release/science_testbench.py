@@ -1,7 +1,7 @@
 import serial  # pip install pyserial
 import time
 import keyboard  # pip install keyboard
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # pip install matplotlib
 import datetime
 import csv
 
@@ -20,11 +20,27 @@ Press and hold s to change a scale factor
 
 """
 
-# CHANGE THE NUMBER OF MOVING AVERAGE POINTS HERE
 
+"""
+
+The COM port of the CH340 Transceiver MUST be updated here
+
+
+"""
+
+PORT = "COM5"  # Change this to your COM port
+
+"""
+
+The number of moving average points can be changed here
+
+"""
 MOVING_AVERAGE_POINTS = 20
 
-# First time constants (you can also change these to change offsets)
+
+"""
+Change Offset and Scaling parameters here
+"""
 
 TEMP_OFFSET_BASE = 0
 HUMIDITY_OFFSET_BASE = 0
@@ -201,7 +217,6 @@ def read_humiture_ecph(ser, command: bytes):
 
 
 # ---------------- UART Setup ----------------
-PORT = "COM5"  # Change this to your COM port
 BAUD = 9600
 BYTESIZE = 8
 PARITY = serial.PARITY_NONE
@@ -228,7 +243,9 @@ with open(csv_file, mode="a", newline = "") as f:
     writer = csv.writer(f)
     writer.writerow(["Time (s)", "Temperature", "Humidity", "pH", "Electrical Conductivity"])
 
-print("Listening... press 'a' to plot temperature snapshot.")
+print("Listening...")
+
+plot_total_open_time = 0
 
 try:
     while True:
@@ -264,7 +281,7 @@ try:
 
         """
 
-        Uncomment these two lines to view instantaneous values
+        Uncomment this line to view instantaneous values
         
 
         """
@@ -293,8 +310,8 @@ try:
         print("Temperature: " + str(avg_temp) + " | Humidity: " + str(avg_hum) + " | pH: " + str(avg_ph) + " | Electrical Conductivity: " + str(avg_ec))
 
 
-
-        now = time.time() - start
+        # Need to subtract plot_total_open_time to fix the plots being a complete mess since the timers don't stop
+        now = time.time() - start - plot_total_open_time
         x.append(now)
 
         with open(csv_file, mode="a", newline = "") as f:
@@ -314,6 +331,8 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
 
         if keyboard.is_pressed("h") and time.time() - last_plot > 0.5:
             last_plot = time.time()
@@ -326,6 +345,8 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
 
         if keyboard.is_pressed("p") and time.time() - last_plot > 0.5:
             last_plot = time.time()
@@ -338,6 +359,8 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
 
         if keyboard.is_pressed("e") and time.time() - last_plot > 0.5:
             last_plot = time.time()
@@ -350,13 +373,21 @@ try:
             plt.grid(True)
             plt.show()  # Blocks here until window closed
             print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
 
 
         if keyboard.is_pressed("o") and time.time() - last_plot > 0.5:
+            offset_select_time = time.time()
             temp_offset, humidity_offset, ph_offset, ec_offset = change_offset(temp_offset, humidity_offset, ph_offset, ec_offset)
+            offset_close_time = time.time()
+            plot_total_open_time += offset_close_time - offset_select_time
 
         if keyboard.is_pressed("s") and time.time() - last_plot > 0.5:
+            offset_select_time = time.time()
             temp_scaling, humidity_scaling, ph_scaling, ec_scaling = change_scaling(temp_scaling, humidity_scaling, ph_scaling, ec_scaling)
+            offset_close_time = time.time()
+            plot_total_open_time += offset_close_time - offset_select_time
 
 except KeyboardInterrupt:
     print("Exiting...")
