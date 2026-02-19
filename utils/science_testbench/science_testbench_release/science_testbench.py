@@ -4,6 +4,7 @@ import keyboard  # pip install keyboard
 import matplotlib.pyplot as plt # pip install matplotlib
 import datetime
 import csv
+from openpyxl import Workbook, load_workbook
 
 """
 Where press is specified, press and hold
@@ -16,6 +17,11 @@ press and hold e to see ec graph
 
 Press and hold o to change an offset
 Press and hold s to change a scale factor
+
+Press and hold y to see temperature moving average graph
+Press and hold j to see humidity moving average graph
+Press and hold q to see pH moving average graph
+Press and hold r to see ec moving average graph
 
 
 """
@@ -224,6 +230,9 @@ STOPBITS = 1
 TIMEOUT = 0
 ser = serial.Serial(port = PORT, baudrate = BAUD, bytesize = BYTESIZE, parity = PARITY, stopbits = STOPBITS, timeout = TIMEOUT)
 
+SHEET_NAME_INSTANT = "Instantaneous Values"
+SHEET_NAME_MOVING_AVERAGES = "Moving Averages"
+
 # Original 8 byte command
 
 Com = bytes([0x01, 0x03, 0x00, 0x00, 0x00, 0x04, 0x44, 0x09])
@@ -234,14 +243,35 @@ ph = []
 ec = []
 x = []
 
+# Storage for moving averages 
+temp_avg = []
+hum_avg = []
+ph_avg = []
+ec_avg = []
+
 start = time.time()
 last_plot = 0  # For key debounce
 
-csv_file = "data_" + str(datetime.datetime.now()).replace(" ", "_").replace(":", ".") + ".csv"
+excel_file = "data_" + str(datetime.datetime.now()).replace(" ", "_").replace(":", ".") + ".xlsx"
 
-with open(csv_file, mode="a", newline = "") as f:
-    writer = csv.writer(f)
-    writer.writerow(["Time (s)", "Temperature", "Humidity", "pH", "Electrical Conductivity"])
+
+
+# Workbook creation
+wb = Workbook()
+
+# Deleting the default sheet
+
+del wb["Sheet"]
+
+ws_inst = wb.create_sheet(SHEET_NAME_INSTANT)
+ws_avg = wb.create_sheet(SHEET_NAME_MOVING_AVERAGES)
+
+ws_inst.append(["Time (s)", "Temperature", "Humidity", "pH", "Electrical Conductivity"])
+ws_avg.append(["Time (s)", "Temperature", "Humidity", "pH", "Electrical Conductivity"])
+
+wb.save(excel_file)
+
+prev_now = 0
 
 print("Listening...")
 
@@ -300,6 +330,10 @@ try:
         avg_ph = moving_average(ph, MOVING_AVERAGE_POINTS)
         avg_ec = moving_average(ec, MOVING_AVERAGE_POINTS)
 
+        temp_avg.append(avg_temp)
+        hum_avg.append(avg_hum)
+        ph_avg.append(avg_ph)
+        ec_avg.append(avg_ec)
 
         """
 
@@ -314,9 +348,17 @@ try:
         now = time.time() - start - plot_total_open_time
         x.append(now)
 
-        with open(csv_file, mode="a", newline = "") as f:
-            writer = csv.writer(f)
-            writer.writerow([now, temp_val, hum_val, ph_val, ec_val])
+        # csv_writing
+
+        ws_inst.append([now, temp_val, hum_val, ph_val, ec_val])
+        ws_avg.append([now, avg_temp, avg_hum, avg_ph, avg_ec])
+
+        # Saving logic
+        if ((now - prev_now) >= 30):
+            wb.save(excel_file)
+            prev_now = now
+            print("Excel File Saved")
+            opened_file = False
 
 
         # ---------- Check for 't' press ----------
@@ -376,6 +418,62 @@ try:
             plot_close_time = time.time()
             plot_total_open_time += plot_close_time - last_plot
 
+        if keyboard.is_pressed("y") and time.time() - last_plot > 0.5:
+            last_plot = time.time()
+            # Pause main loop and show snapshot plot
+            plt.figure()
+            plt.plot(x, temp_avg, color='red', lw=2)
+            plt.xlabel("Time (s)")
+            plt.ylabel("Temperature")
+            plt.title("Temperature vs Time (M.AVG)")
+            plt.grid(True)
+            plt.show()  # Blocks here until window closed
+            print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
+
+        if keyboard.is_pressed("j") and time.time() - last_plot > 0.5:
+            last_plot = time.time()
+            # Pause main loop and show snapshot plot
+            plt.figure()
+            plt.plot(x, hum_avg, color='blue', lw=2)
+            plt.xlabel("Time (s)")
+            plt.ylabel("Humidity")
+            plt.title("Humidity vs Time (M.AVG)")
+            plt.grid(True)
+            plt.show()  # Blocks here until window closed
+            print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
+
+        if keyboard.is_pressed("q") and time.time() - last_plot > 0.5:
+            last_plot = time.time()
+            # Pause main loop and show snapshot plot
+            plt.figure()
+            plt.plot(x, ph_avg, color='magenta', lw=2)
+            plt.xlabel("Time (s)")
+            plt.ylabel("pH")
+            plt.title("pH vs Time (M.AVG)")
+            plt.grid(True)
+            plt.show()  # Blocks here until window closed
+            print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
+
+        if keyboard.is_pressed("r") and time.time() - last_plot > 0.5:
+            last_plot = time.time()
+            # Pause main loop and show snapshot plot
+            plt.figure()
+            plt.plot(x, ec_avg, color='orange', lw=2)
+            plt.xlabel("Time (s)")
+            plt.ylabel("Electrical Conductivity")
+            plt.title("Electrical Conductivity vs Time (M.AVG)")
+            plt.grid(True)
+            plt.show()  # Blocks here until window closed
+            print("Plot closed, resuming data collection...")
+            plot_close_time = time.time()
+            plot_total_open_time += plot_close_time - last_plot
+
 
         if keyboard.is_pressed("o") and time.time() - last_plot > 0.5:
             offset_select_time = time.time()
@@ -391,6 +489,7 @@ try:
 
 except KeyboardInterrupt:
     print("Exiting...")
+    wb.save(excel_file)
     ser.close()
 
 
