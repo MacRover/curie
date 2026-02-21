@@ -51,7 +51,7 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
   <link
-    name="Shoulder">
+    name="Base">
     <inertial>
       <origin
         xyz="-0.000715904680960371 0.115948468031078 0.00812192398664138"
@@ -91,7 +91,7 @@
     </collision>
   </link>
   <joint
-    name="Shoulder_joint"
+    name="Base_joint"
     type="continuous">
     <origin
       xyz="0.0314355367866296 -0.167112129632076 0.0215333450507679"
@@ -99,7 +99,7 @@
     <parent
       link="Baseplate_Part" />
     <child
-      link="Shoulder" />
+      link="Base" />
     <axis
       xyz="0 1 0" />
   </joint>
@@ -150,7 +150,7 @@
       xyz="0 0.254 0"
       rpy="0.00812251575960651 0.000375080547518232 -0.0922896907892129" />
     <parent
-      link="Shoulder" />
+      link="Base" />
     <child
       link="Bicep_Linkage" />
     <axis
@@ -210,7 +210,7 @@
       xyz="0.0605805514570394 0 -0.998163311680589" />
   </joint>
   <link
-    name="Wrist_Pitch">
+    name="Wrist_Base">
     <inertial>
       <origin
         xyz="-0.0138523212718659 0.0636510542969802 0.0885404926741277"
@@ -250,7 +250,7 @@
     </collision>
   </link>
   <joint
-    name="Wrist_pitch_joint"
+    name="Wrist_base_joint"
     type="fixed">
     <origin
       xyz="0.0614760326108716 -0.449236652255744 0.0948418360911152"
@@ -258,12 +258,12 @@
     <parent
       link="Forearm_Linkage" />
     <child
-      link="Wrist_Pitch" />
+      link="Wrist_Base" />
     <axis
       xyz="0 0 0" />
   </joint>
   <link
-    name="Wrist_Roll">
+    name="Wrist_Pitch">
     <inertial>
       <origin
         xyz="-0.0461506740704483 -0.00130412593875406 0.000652222569832731"
@@ -303,15 +303,15 @@
     </collision>
   </link>
   <joint
-    name="Wrist_roll_joint"
+    name="Wrist_pitch_joint"
     type="continuous">
     <origin
       xyz="-0.0404563209238247 -0.0124767317892557 0.0124767317892556"
       rpy="-2.03938401887035 0.785398163397445 -1.57079632679489" />
     <parent
-      link="Wrist_Pitch" />
+      link="Wrist_Base" />
     <child
-      link="Wrist_Roll" />
+      link="Wrist_Pitch" />
     <axis
       xyz="1 0 0" />
   </joint>

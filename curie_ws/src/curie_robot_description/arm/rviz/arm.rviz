@@ -81,17 +81,17 @@ Visualization Manager:
           Show Trail: false
           Value: true
         Link Tree Style: Links in Alphabetic Order
-        Shoulder:
+        Base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        Wrist_Base:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
         Wrist_Pitch:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        Wrist_Roll:
           Alpha: 1
           Show Axes: false
           Show Trail: false
