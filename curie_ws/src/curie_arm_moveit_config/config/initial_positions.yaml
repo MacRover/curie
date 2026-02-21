@@ -1,0 +1,7 @@
+# Default initial positions for arm's ros2_control fake system
+
+initial_positions:
+  Bicep_Joint: 0
+  Forearm_Joint: 0
+  Base_joint: 0
+  Wrist_pitch_joint: 0
