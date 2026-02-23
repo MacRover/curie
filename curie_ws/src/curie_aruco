@@ -1,0 +1,230 @@
+import cv2
+import numpy as np 
+from cv2 import aruco
+import rclpy 
+from rclpy.node import Node 
+from geometry_msgs.msg import PoseStamped 
+from std_msgs.msg import String
+
+gstreamer_pipeline = ('udpsrc port=40627 caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265" !   rtpjitterbuffer latency=50 !   rtph265depay !   h265parse !   queue max-size-buffers=20 max-size-time=0 max-size-bytes=0 leaky=downstream !   avdec_h265 !   videoconvert ! appsink')
+
+# Doing this all with unknown calibration to start, will get calibration done from testing and add 
+
+camera_calibration = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], dtype=np.float32)
+dist_coefficients = np.zeros((5, 1), dtype=np.float32) 
+
+
+class MarkerDetectionSystem(Node): 
+
+    MARKER_POSITIONS = {0: np.array([0.0, 0.0, 0.0]), 1: np.array([0.355, 0.0, 0.0]), 2: np.array([0.0, 0.130, 0.0]), 3: np.array([0.355, 0.130, 0.0])} # using 355mm width, 130mm height of keyboard
+
+    KEY_POSITIONS = {
+        '`': (0,0), 
+        '1': (0,0), 
+        '2': (0,0),
+        '3': (0,0),
+        '4': (0,0),
+        '5': (0,0),
+        '6': (0,0), 
+        '7': (0,0),
+        '8': (0,0),
+        '9': (0,0),
+        '0': (0,0),
+        '-': (0,0),
+        '=': (0,0),
+        'BACKSPACE': (0,0),
+        'q': (0,0), 
+        'w': (0,0), 
+        'e': (0,0),
+        'r': (0,0),
+        't': (0,0),
+        'y': (0,0),
+        'u': (0,0), 
+        'i': (0,0),
+        'o': (0,0),
+        'p': (0,0),
+        '[': (0,0),
+        ']': (0,0),
+        'CAPS': (0,0),
+        'a': (0,0), 
+        's': (0,0), 
+        'd': (0,0),
+        'f': (0,0),
+        'g': (0,0),
+        'h': (0,0),
+        'j': (0,0), 
+        'k': (0,0),
+        'l': (0,0),
+        ';': (0,0),
+        "'": (0,0),
+        'ENTER': (0,0),
+        'SHIFT': (0,0),
+        'z': (0,0), 
+        'x': (0,0), 
+        'c': (0,0),
+        'v': (0,0),
+        'b': (0,0),
+        'n': (0,0),
+        'm': (0,0), 
+        ',': (0,0),
+        '.': (0,0),
+        '/': (0,0),
+        'SPACE': (0,0),
+    }
+
+    def __init__(self):
+        super().__init__('marker_detection_system')
+
+        aruco_dictionary= aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
+        aruco_params = aruco.DetectorParameters()
+        self.detector = aruco.ArucoDetector(aruco_dictionary, aruco_params)
+
+        cap = cv2.VideoCapture(gstreamer_pipeline, cv2.CAP_GSTREAMER) 
+
+
+        self.pose_pub = self.create_publisher(PoseStamped, 'keyboard_pose', 10)
+        self.target_key_sub = self.create_subscription(
+            String, 
+            'target_key', 
+            self.target_key_callback,
+            10
+        )
+        self.key_target_pub = self.create_publisher(PoseStamped, 'key_target_pose', 10)
+
+        self.target_key = None 
+        self.last_rvec = None 
+        self.last_tvec = None 
+
+        self.timer = self.create_timer(1.0 / 30.0, self.timer_callback)
+        self.get_logger().info("MarkerDetectionSystem node started")
+
+    def target_key_callback(self, msg):
+        key = msg.data.upper()
+        if key in self.KEY_POSITIONS: 
+            self.target_key = key 
+            self.get_logger().info(f"Target key set to: {key}") 
+        else:
+            self.get_logger().warn(f"Unknown key requested: {key}")
+
+    def timer_callback(self):
+        ret, frame = self.cap.read() 
+        if not ret: 
+            self.get_logger().warn("Failed to grab frame") 
+            return 
+        
+        corners, ids, _ = self.detector.detectMarkers(frame)
+        rvec, tvec = self.detect_markers(corners, ids)
+
+        self.last_rvec = rvec 
+        self.last_tvec = tvec 
+
+        self.publish_pose(self.pose_pub, tvec, rvec)
+
+        if self.target_key is not None:
+            key_pos = self.key_to_3d(self.target_key, rvec, tvec)
+            self.publish_pose(self.key_target_pub, key_pos)
+            self.get_logger().info(f"{self.target_key} -> {key_pos}")
+
+    def detect_markers(self, corners, ids): 
+        # Need 3 markers visible to get accurate pose
+        if ids is None or len(ids) < 3: 
+            return None, None 
+        
+        object_pts, image_pts = [], []
+
+        for i, marker_id in enumerate(ids.flatten()):
+            if marker_id in self.MARKER_POSITIONS:
+                object_pts.append(self.MARKER_POSITIONS[marker_id])
+                center = corners[i][0].mean(axis=0)
+                image_pts.append(center)
+
+            if len(object_pts) < 3: 
+                return None, None 
+            
+        object_pts = np.array(object_pts, dtype=np.float32)
+        image_pts = np.array(image_pts, dtype=np.float32) 
+
+        success, rvec, tvec = cv2.solvePnP(object_pts, image_pts, camera_calibration, dist_coefficients, flags=cv2.SOLVEPNP_ITERATIVE)
+
+        if not success: 
+            return None, None 
+
+        return rvec, tvec 
+    
+    def key_to_3d(self, key, rvec, tvec):
+        if key not in self.KEY_POSITIONS:
+            raise ValueError(f"Unknown key: '{key}'")
+        
+        x,y = self.KEY_POSITIONS[key]
+        key_pos = np.array([[x * 0.355, y * 0.130, 0.0]], dtype=np.float32)
+
+        R, _ = cv2.Rodrigues(rvec)
+        pos_camera = R @ key_pos.T + tvec
+        return pos_camera.flatten() 
+    
+    def publish_pose(self, publisher, position, rvec=None):
+        msg = PoseStamped() 
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = 'camera_frame'
+        msg.pose.position.x = float(position[0])
+        msg.pose.position.y = float(position[1]) 
+        msg.pose.position.z = float(position[2])
+
+        if rvec is not None:
+            R, _ = cv2.Rodrigues(rvec)
+            msg.pose.orientation = self.rotation_matrix_to_quaternion(R)
+        else:
+            msg.pose.orientation.w = 1.0  # identity
+
+        publisher.publish(msg)
+
+    def rotation_matrix_to_quaternion(self, R):
+        from geometry_msgs.msg import Quaternion
+        trace = R[0, 0] + R[1, 1] + R[2, 2]
+        if trace > 0:
+            s = 0.5 / np.sqrt(trace + 1.0)
+            w = 0.25 / s
+            x = (R[2, 1] - R[1, 2]) * s
+            y = (R[0, 2] - R[2, 0]) * s
+            z = (R[1, 0] - R[0, 1]) * s
+        elif R[0, 0] > R[1, 1] and R[0, 0] > R[2, 2]:
+            s = 2.0 * np.sqrt(1.0 + R[0, 0] - R[1, 1] - R[2, 2])
+            w = (R[2, 1] - R[1, 2]) / s
+            x = 0.25 * s
+            y = (R[0, 1] + R[1, 0]) / s
+            z = (R[0, 2] + R[2, 0]) / s
+        elif R[1, 1] > R[2, 2]:
+            s = 2.0 * np.sqrt(1.0 + R[1, 1] - R[0, 0] - R[2, 2])
+            w = (R[0, 2] - R[2, 0]) / s
+            x = (R[0, 1] + R[1, 0]) / s
+            y = 0.25 * s
+            z = (R[1, 2] + R[2, 1]) / s
+        else:
+            s = 2.0 * np.sqrt(1.0 + R[2, 2] - R[0, 0] - R[1, 1])
+            w = (R[1, 0] - R[0, 1]) / s
+            x = (R[0, 2] + R[2, 0]) / s
+            y = (R[1, 2] + R[2, 1]) / s
+            z = 0.25 * s
+
+        q = Quaternion()
+        q.x, q.y, q.z, q.w = x, y, z, w
+        return q
+
+    def cleanup(self):
+        self.cap.release()
+
+
+def main(args=None): 
+    rclpy.init(args=args) 
+    node = MarkerDetectionSystem() 
+    try: 
+        rclpy.spin(node)
+    except KeyboardInterrupt: 
+        pass 
+    finally:
+        node.cleanup()
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == "__main--":
+    main()
