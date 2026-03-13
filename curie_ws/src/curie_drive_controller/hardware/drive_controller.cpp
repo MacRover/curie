@@ -21,7 +21,6 @@ hardware_interface::CallbackReturn CurieDiffDriveController::on_init(
     }
     drive_hw_thread_ = std::thread(&hardware::SparkDriveInterface::run, &drive_hardware_);
     wheel_velocities_.resize(info_.joints.size(), 0.0);
-    wheel_positions_.resize(info_.joints.size(), 0.0);
     hw_commands_.resize(info_.joints.size(), 0.0);
 
     wheel_state_ = true;
@@ -34,8 +33,6 @@ std::vector<hardware_interface::StateInterface> CurieDiffDriveController::export
   std::vector<hardware_interface::StateInterface> state_interfaces;
   for (auto i = 0u; i < info_.joints.size(); i++)
   {
-    state_interfaces.emplace_back(
-        info_.joints[i].name, "position", &wheel_positions_[i]);
     state_interfaces.emplace_back(
         info_.joints[i].name, "velocity", &wheel_velocities_[i]);
   }
