@@ -1,0 +1,9 @@
+<library path="curie_arm_controller">
+  <class name="curie_arm_controller/CurieArmController"
+         type="curie_arm_controller::CurieArmController"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+        An arm hardware interface and ros controller for Curie.
+    </description>
+  </class>
+</library>
