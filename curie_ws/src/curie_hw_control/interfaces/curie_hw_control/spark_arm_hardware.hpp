@@ -7,38 +7,8 @@
 #include <chrono>
 #include <optional>
 
+#include "sparks.hpp"
 #include "hardware.hpp"
-#include "spark_mmrt/can/SocketCanTransport.hpp"
-#include "spark_mmrt/device/SparkMax.hpp"
-
-#define CAN_INTERFACE "can0"
-
-typedef enum : uint8_t
-{
-    BASE = (SPARK_ARM<< 4) | 1,
-    SHOULDER = (SPARK_ARM << 4) | 2,
-    ELBOW = (SPARK_ARM << 4) | 3,
-    WRIST_ROLL = (SPARK_ARM << 4) | 4,
-    WRIST_PITCH = (SPARK_ARM << 4) | 5,
-} SparkDriveID;
-
-typedef struct
-{
-    float base_position;
-    float shoulder_position;
-    float elbow_position;
-    float wrist_roll_position;
-    float wrist_pitch_position;
-} SparkArmCommand;
-
-typedef struct
-{
-    Status5 base_status;
-    Status5 shoulder_status;
-    Status5 elbow_status;
-    Status5 wrist_roll_status;
-    Status5 wrist_pitch_status;
-} SparkArmStatus;
 
 namespace hardware
 {

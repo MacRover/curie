@@ -85,12 +85,12 @@ hardware_interface::return_type CurieDiffDriveController::read(
     }
     
     // Convert from deg/s to rad/s
-    wheel_velocities_[0] = drive_status_.fl_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
-    wheel_velocities_[1] = drive_status_.fr_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
-    wheel_velocities_[2] = drive_status_.ml_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
-    wheel_velocities_[3] = drive_status_.mr_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
-    wheel_velocities_[4] = drive_status_.bl_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
-    wheel_velocities_[5] = drive_status_.br_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[0] = drive_status_.drive.fl_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[1] = drive_status_.drive.fr_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[2] = drive_status_.drive.ml_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[3] = drive_status_.drive.mr_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[4] = drive_status_.drive.bl_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[5] = drive_status_.drive.br_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
 
     return hardware_interface::return_type::OK;
 }
@@ -115,12 +115,12 @@ hardware_interface::return_type CurieDiffDriveController::write(
 
     if (wheel_state_)
     {
-        drive_commands_.fl_velocity = (vehicle_moving_) ? hw_commands_[0] * RADPS_TO_DEGPM : 0.0f;
-        drive_commands_.fr_velocity = (vehicle_moving_) ? hw_commands_[1] * RADPS_TO_DEGPM : 0.0f;
-        drive_commands_.ml_velocity = (vehicle_moving_) ? hw_commands_[2] * RADPS_TO_DEGPM : 0.0f;
-        drive_commands_.mr_velocity = (vehicle_moving_) ? hw_commands_[3] * RADPS_TO_DEGPM : 0.0f;
-        drive_commands_.bl_velocity = (vehicle_moving_) ? hw_commands_[4] * RADPS_TO_DEGPM : 0.0f;
-        drive_commands_.br_velocity = (vehicle_moving_) ? hw_commands_[5] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.drive.fl_velocity = (vehicle_moving_) ? hw_commands_[0] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.drive.fr_velocity = (vehicle_moving_) ? hw_commands_[1] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.drive.ml_velocity = (vehicle_moving_) ? hw_commands_[2] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.drive.mr_velocity = (vehicle_moving_) ? hw_commands_[3] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.drive.bl_velocity = (vehicle_moving_) ? hw_commands_[4] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.drive.br_velocity = (vehicle_moving_) ? hw_commands_[5] * RADPS_TO_DEGPM : 0.0f;
 
         drive_hardware_.write(static_cast<void*>(&drive_commands_));
 

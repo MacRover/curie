@@ -1,6 +1,6 @@
-#include "curie_hw_control/spark_arm_hardware.hpp"
+#include "curie_hw_control/spark_arm_velocity_hardware.hpp"
 
-hardware::SparkArmInterface::SparkArmInterface() : 
+hardware::SparkArmVelocityInterface::SparkArmVelocityInterface() : 
     base_(can_transport_, BASE),
     shoulder_(can_transport_, SHOULDER),
     elbow_(can_transport_, ELBOW),
@@ -10,7 +10,7 @@ hardware::SparkArmInterface::SparkArmInterface() :
 
 }
 
-int8_t hardware::SparkArmInterface::initialize(void* config)
+int8_t hardware::SparkArmVelocityInterface::initialize(void* config)
 {
     bool isVCAN = (config != nullptr) ? *(static_cast<bool*>(config)) : false;
     can_transport_.open(isVCAN ? "vcan0" : CAN_INTERFACE, SPARK_ARM);
@@ -21,13 +21,13 @@ int8_t hardware::SparkArmInterface::initialize(void* config)
     return 0;
 }
 
-int8_t hardware::SparkArmInterface::shutdown()
+int8_t hardware::SparkArmVelocityInterface::shutdown()
 {
     can_transport_.close();
     return 0;
 }
 
-int8_t hardware::SparkArmInterface::read(void* data)
+int8_t hardware::SparkArmVelocityInterface::read(void* data)
 {
     std::lock_guard<std::mutex> lock(read_mtx);
     SparkStatus* status_data = static_cast<SparkStatus*>(data);
@@ -44,7 +44,7 @@ int8_t hardware::SparkArmInterface::read(void* data)
     return 0;
 }
 
-int8_t hardware::SparkArmInterface::write(void* data)
+int8_t hardware::SparkArmVelocityInterface::write(void* data)
 {
     SparkCommand* arm_cmd = static_cast<SparkCommand*>(data);
 
@@ -53,25 +53,25 @@ int8_t hardware::SparkArmInterface::write(void* data)
         return -1;
     }
 
-    base_.setPosition(arm_cmd->arm.base_position);
+    base_.setVelocity(arm_cmd->arm.base_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    shoulder_.setPosition(arm_cmd->arm.shoulder_position);
+    shoulder_.setVelocity(arm_cmd->arm.shoulder_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    elbow_.setPosition(arm_cmd->arm.elbow_position);
+    elbow_.setVelocity(arm_cmd->arm.elbow_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_roll_.setPosition(arm_cmd->arm.wrist_roll_position);
+    wrist_roll_.setVelocity(arm_cmd->arm.wrist_roll_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_pitch_.setPosition(arm_cmd->arm.wrist_pitch_position);
+    wrist_pitch_.setVelocity(arm_cmd->arm.wrist_pitch_velocity);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
     return 0;
 }
 
-void hardware::SparkArmInterface::run()
+void hardware::SparkArmVelocityInterface::run()
 {
     while (can_transport_.isOpen())
     {

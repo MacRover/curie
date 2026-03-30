@@ -77,22 +77,22 @@ hardware_interface::return_type CurieArmController::read(
     (void)time;
     (void)period;
 
-    if (arm_hardware_.read(static_cast<void*>(&arm_status_)) < 0)
+    if (arm_hardware_.read(static_cast<void*>(&status_)) < 0)
     {
         return hardware_interface::return_type::ERROR;
     }
 
-    joint_positions_[0] = arm_status_.base_status.dutyCycleEncVPosition / RAD_TO_DEG;
-    joint_positions_[1] = arm_status_.shoulder_status.dutyCycleEncVPosition / RAD_TO_DEG;
-    joint_positions_[2] = arm_status_.elbow_status.dutyCycleEncVPosition / RAD_TO_DEG;
-    joint_positions_[3] = arm_status_.wrist_pitch_status.dutyCycleEncVPosition / RAD_TO_DEG;
-    // joint_positions_[4] = arm_status_.wrist_roll_status.dutyCycleEncVPosition / RAD_TO_DEG;
+    joint_positions_[0] = status_.arm.base_status.dutyCycleEncPosition / RAD_TO_DEG;
+    joint_positions_[1] = status_.arm.shoulder_status.dutyCycleEncPosition / RAD_TO_DEG;
+    joint_positions_[2] = status_.arm.elbow_status.dutyCycleEncPosition / RAD_TO_DEG;
+    joint_positions_[3] = status_.arm.wrist_pitch_status.dutyCycleEncPosition / RAD_TO_DEG;
+    // joint_positions_[4] = status_.arm.wrist_roll_status.dutyCycleEncPosition / RAD_TO_DEG;
 
-    joint_velocities_[0] = arm_status_.base_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[1] = arm_status_.shoulder_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[2] = arm_status_.elbow_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[3] = arm_status_.wrist_pitch_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    // joint_velocities_[4] = arm_status_.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[1] = status_.arm.shoulder_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[2] = status_.arm.elbow_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[3] = status_.arm.wrist_pitch_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    // joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
 
     return hardware_interface::return_type::OK;
 }
@@ -103,14 +103,14 @@ hardware_interface::return_type CurieArmController::write(
     (void)time;
     (void)period;
 
-    arm_commands_.base_position = hw_commands_[0] * RAD_TO_DEG;
-    arm_commands_.shoulder_position = hw_commands_[1] * RAD_TO_DEG;
-    arm_commands_.elbow_position = hw_commands_[2] * RAD_TO_DEG;
-    arm_commands_.wrist_pitch_position = hw_commands_[3] * RAD_TO_DEG;
-    // arm_commands_.wrist_roll_position = hw_commands_[4] * RAD_TO_DEG;
-    arm_commands_.wrist_roll_position = 0.0f;
+    commands_.arm.base_position = hw_commands_[0] * RAD_TO_DEG;
+    commands_.arm.shoulder_position = hw_commands_[1] * RAD_TO_DEG;
+    commands_.arm.elbow_position = hw_commands_[2] * RAD_TO_DEG;
+    commands_.arm.wrist_pitch_position = hw_commands_[3] * RAD_TO_DEG;
+    // commands_.arm.wrist_roll_position = hw_commands_[4] * RAD_TO_DEG;
+    commands_.arm.wrist_roll_position = 0.0f;
 
-    if (arm_hardware_.write(static_cast<void*>(&arm_commands_)) < 0)
+    if (arm_hardware_.write(static_cast<void*>(&commands_)) < 0)
     {
         return hardware_interface::return_type::ERROR;
     }
