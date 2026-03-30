@@ -12,7 +12,6 @@
 #include "spark_mmrt/device/SparkMax.hpp"
 
 #define CAN_INTERFACE "can0"
-// #define CAN_INTERFACE "vcan0" // For testing
 
 typedef enum : uint8_t
 {
@@ -51,7 +50,7 @@ namespace hardware
     public:
         SparkDriveInterface();
 
-        int8_t initialize() override;
+        int8_t initialize(void* config) override;
 
         int8_t shutdown() override;
 

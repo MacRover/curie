@@ -1,7 +1,8 @@
 #include "curie_arm_controller/arm_controller.hpp"
 #include <math.h>
 
-#define RPM_TO_RADPS (2.0f * M_PI / 60.0f)
+#define RAD_TO_DEG (360.0f / (2.0f * M_PI))
+#define RADPS_TO_DEGPM (60.0f * RAD_TO_DEG)
 
 namespace curie_arm_controller
 {
@@ -14,7 +15,11 @@ hardware_interface::CallbackReturn CurieArmController::on_init(
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    if (arm_hardware_.initialize() < 0)
+    bool use_vcan_interface;
+    std::string use_vcan_hw_param = info_.hardware_parameters["use_vcan"];
+    std::transform(use_vcan_hw_param.begin(), use_vcan_hw_param.end(), use_vcan_hw_param.begin(), ::tolower);
+    std::istringstream(use_vcan_hw_param) >> std::boolalpha >> use_vcan_interface;
+    if (arm_hardware_.initialize(&use_vcan_interface) < 0)
     {
         return hardware_interface::CallbackReturn::ERROR;
     }
@@ -46,7 +51,7 @@ std::vector<hardware_interface::CommandInterface> CurieArmController::export_com
   for (auto i = 0u; i < info_.joints.size(); i++)
   {
     command_interfaces.emplace_back(
-        info_.joints[i].name, "velocity", &hw_commands_[i]);
+        info_.joints[i].name, "position", &hw_commands_[i]);
   }
 
   return command_interfaces;
@@ -77,17 +82,17 @@ hardware_interface::return_type CurieArmController::read(
         return hardware_interface::return_type::ERROR;
     }
 
-    joint_positions_[0] = arm_status_.base_status.dutyCycleEncVPosition * RPM_TO_RADPS;
-    joint_positions_[1] = arm_status_.shoulder_status.dutyCycleEncVPosition * RPM_TO_RADPS;
-    joint_positions_[2] = arm_status_.elbow_status.dutyCycleEncVPosition * RPM_TO_RADPS;
-    joint_positions_[3] = arm_status_.wrist_pitch_status.dutyCycleEncVPosition * RPM_TO_RADPS;
-    // joint_positions_[4] = arm_status_.wrist_roll_status.dutyCycleEncVPosition * RPM_TO_RADPS;
+    joint_positions_[0] = arm_status_.base_status.dutyCycleEncVPosition / RAD_TO_DEG;
+    joint_positions_[1] = arm_status_.shoulder_status.dutyCycleEncVPosition / RAD_TO_DEG;
+    joint_positions_[2] = arm_status_.elbow_status.dutyCycleEncVPosition / RAD_TO_DEG;
+    joint_positions_[3] = arm_status_.wrist_pitch_status.dutyCycleEncVPosition / RAD_TO_DEG;
+    // joint_positions_[4] = arm_status_.wrist_roll_status.dutyCycleEncVPosition / RAD_TO_DEG;
 
-    joint_velocities_[0] = arm_status_.base_status.dutyCycleEncVelocity * RPM_TO_RADPS;
-    joint_velocities_[1] = arm_status_.shoulder_status.dutyCycleEncVelocity * RPM_TO_RADPS;
-    joint_velocities_[2] = arm_status_.elbow_status.dutyCycleEncVelocity * RPM_TO_RADPS;
-    joint_velocities_[3] = arm_status_.wrist_pitch_status.dutyCycleEncVelocity * RPM_TO_RADPS;
-    // joint_velocities_[4] = arm_status_.wrist_roll_status.dutyCycleEncVelocity * RPM_TO_RADPS;
+    joint_velocities_[0] = arm_status_.base_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[1] = arm_status_.shoulder_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[2] = arm_status_.elbow_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[3] = arm_status_.wrist_pitch_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    // joint_velocities_[4] = arm_status_.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
 
     return hardware_interface::return_type::OK;
 }
@@ -98,11 +103,12 @@ hardware_interface::return_type CurieArmController::write(
     (void)time;
     (void)period;
 
-    arm_commands_.base_velocity = hw_commands_[0] / RPM_TO_RADPS;
-    arm_commands_.shoulder_velocity = hw_commands_[1] / RPM_TO_RADPS;
-    arm_commands_.elbow_velocity = hw_commands_[2] / RPM_TO_RADPS;
-    arm_commands_.wrist_pitch_velocity = hw_commands_[3] / RPM_TO_RADPS;
-    // arm_commands_.wrist_roll_velocity = hw_commands_[4] / RPM_TO_RADPS;
+    arm_commands_.base_position = hw_commands_[0] * RAD_TO_DEG;
+    arm_commands_.shoulder_position = hw_commands_[1] * RAD_TO_DEG;
+    arm_commands_.elbow_position = hw_commands_[2] * RAD_TO_DEG;
+    arm_commands_.wrist_pitch_position = hw_commands_[3] * RAD_TO_DEG;
+    // arm_commands_.wrist_roll_position = hw_commands_[4] * RAD_TO_DEG;
+    arm_commands_.wrist_roll_position = 0.0f;
 
     if (arm_hardware_.write(static_cast<void*>(&arm_commands_)) < 0)
     {

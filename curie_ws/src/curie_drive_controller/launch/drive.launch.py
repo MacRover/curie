@@ -18,9 +18,17 @@ def generate_launch_description():
             description="Start RViz2 automatically with this launch file.",
         )
     )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "use_vcan",
+            default_value="false",
+            description="Use vcan interface for hardware communication.",
+        )
+    )
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
+    use_vcan = LaunchConfiguration("use_vcan")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -31,7 +39,8 @@ def generate_launch_description():
                 [FindPackageShare("curie_drive_controller"), "config", "mock_diffbot.urdf.xacro"]
             ),
             " ",
-            "use_mock_hardware:=False",
+            "use_vcan:=",
+            use_vcan,
         ]
     )
     robot_description = {"robot_description": robot_description_content}

@@ -5,15 +5,15 @@ hardware::SparkArmInterface::SparkArmInterface() :
     shoulder_(can_transport_, SHOULDER),
     elbow_(can_transport_, ELBOW),
     wrist_roll_(can_transport_, WRIST_ROLL),
-    wrist_pitch_(can_transport_, WRIST_PITCH),
-    gripper_(can_transport_, GRIPPER)
+    wrist_pitch_(can_transport_, WRIST_PITCH)
 {
 
 }
 
-int8_t hardware::SparkArmInterface::initialize()
+int8_t hardware::SparkArmInterface::initialize(void* config)
 {
-    can_transport_.open(CAN_INTERFACE, SPARK_ARM);
+    bool isVCAN = (config != nullptr) ? *(static_cast<bool*>(config)) : false;
+    can_transport_.open(isVCAN ? "vcan0" : CAN_INTERFACE, SPARK_ARM);
     if (!can_transport_.isOpen())
     {
         return -1;
@@ -41,7 +41,6 @@ int8_t hardware::SparkArmInterface::read(void* data)
     status_data->elbow_status = elbow_.getStatus5();
     status_data->wrist_roll_status = wrist_roll_.getStatus5();
     status_data->wrist_pitch_status = wrist_pitch_.getStatus5();
-    status_data->gripper_status = gripper_.getStatus5();
     return 0;
 }
 
@@ -54,22 +53,20 @@ int8_t hardware::SparkArmInterface::write(void* data)
         return -1;
     }
 
-    base_.setVelocity(arm_cmd->base_velocity);
+    base_.setVelocity(arm_cmd->base_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    shoulder_.setVelocity(arm_cmd->shoulder_velocity);
+    shoulder_.setVelocity(arm_cmd->shoulder_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    elbow_.setVelocity(arm_cmd->elbow_velocity);
+    elbow_.setVelocity(arm_cmd->elbow_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_roll_.setVelocity(arm_cmd->wrist_roll_velocity);
+    wrist_roll_.setVelocity(arm_cmd->wrist_roll_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_pitch_.setVelocity(arm_cmd->wrist_pitch_velocity);
+    wrist_pitch_.setVelocity(arm_cmd->wrist_pitch_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
-
-    gripper_.setVelocity(arm_cmd->gripper_velocity);
 
     return 0;
 }
@@ -102,9 +99,6 @@ void hardware::SparkArmInterface::run()
                 break;
             case WRIST_PITCH:
                 wrist_pitch_.processFrame(frame);
-                break;
-            case GRIPPER:
-                gripper_.processFrame(frame);
                 break;
             default:
                 break;

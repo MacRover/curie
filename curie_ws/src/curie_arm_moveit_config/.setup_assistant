@@ -1,16 +1,16 @@
 moveit_setup_assistant_config:
   urdf:
     package: curie_robot_description
-    relative_path: urdf/arm.urdf
+    relative_path: arm/urdf/arm.urdf
   srdf:
     relative_path: config/arm.srdf
   package_settings:
-    author_name: ""
-    author_email: ""
-    generated_timestamp: 1768516887
+    author_name: John Cho
+    author_email: johnnychox@gmail.com
+    generated_timestamp: 1774817453
   control_xacro:
     command:
-      - position
+      - velocity
     state:
       - position
       - velocity
@@ -19,7 +19,7 @@ moveit_setup_assistant_config:
       - control_xacro
   control_xacro:
     command:
-      - position
+      - velocity
     state:
       - position
       - velocity

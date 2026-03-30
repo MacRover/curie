@@ -1,7 +1,8 @@
 #include "curie_drive_controller/drive_controller.hpp"
 #include <math.h>
 
-#define RPM_TO_RADPS (2.0f * M_PI / 60.0f)
+#define RAD_TO_DEG (360.0f / (2.0f * M_PI))
+#define RADPS_TO_DEGPM (60.0f * RAD_TO_DEG)
 #define VELOCITY_DEADZONE 0.1f
 
 namespace curie_drive_controller
@@ -15,7 +16,11 @@ hardware_interface::CallbackReturn CurieDiffDriveController::on_init(
         return hardware_interface::CallbackReturn::ERROR;
     }
 
-    if (drive_hardware_.initialize() < 0)
+    bool use_vcan_interface;
+    std::string use_vcan_hw_param = info_.hardware_parameters["use_vcan"];
+    std::transform(use_vcan_hw_param.begin(), use_vcan_hw_param.end(), use_vcan_hw_param.begin(), ::tolower);
+    std::istringstream(use_vcan_hw_param) >> std::boolalpha >> use_vcan_interface;
+    if (drive_hardware_.initialize(&use_vcan_interface) < 0)
     {
         return hardware_interface::CallbackReturn::ERROR;
     }
@@ -79,13 +84,13 @@ hardware_interface::return_type CurieDiffDriveController::read(
         return hardware_interface::return_type::ERROR;
     }
     
-    // Convert from RPM to rad/s
-    wheel_velocities_[0] = drive_status_.fl_status.primaryEncoderVelocity * RPM_TO_RADPS;
-    wheel_velocities_[1] = drive_status_.fr_status.primaryEncoderVelocity * RPM_TO_RADPS;
-    wheel_velocities_[2] = drive_status_.ml_status.primaryEncoderVelocity * RPM_TO_RADPS;
-    wheel_velocities_[3] = drive_status_.mr_status.primaryEncoderVelocity * RPM_TO_RADPS;
-    wheel_velocities_[4] = drive_status_.bl_status.primaryEncoderVelocity * RPM_TO_RADPS;
-    wheel_velocities_[5] = drive_status_.br_status.primaryEncoderVelocity * RPM_TO_RADPS;
+    // Convert from deg/s to rad/s
+    wheel_velocities_[0] = drive_status_.fl_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[1] = drive_status_.fr_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[2] = drive_status_.ml_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[3] = drive_status_.mr_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[4] = drive_status_.bl_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
+    wheel_velocities_[5] = drive_status_.br_status.primaryEncoderVelocity / RADPS_TO_DEGPM;
 
     return hardware_interface::return_type::OK;
 }
@@ -110,12 +115,12 @@ hardware_interface::return_type CurieDiffDriveController::write(
 
     if (wheel_state_)
     {
-        drive_commands_.fl_velocity = (vehicle_moving_) ? hw_commands_[0] / RPM_TO_RADPS : 0.0f;
-        drive_commands_.fr_velocity = (vehicle_moving_) ? hw_commands_[1] / RPM_TO_RADPS : 0.0f;
-        drive_commands_.ml_velocity = (vehicle_moving_) ? hw_commands_[2] / RPM_TO_RADPS : 0.0f;
-        drive_commands_.mr_velocity = (vehicle_moving_) ? hw_commands_[3] / RPM_TO_RADPS : 0.0f;
-        drive_commands_.bl_velocity = (vehicle_moving_) ? hw_commands_[4] / RPM_TO_RADPS : 0.0f;
-        drive_commands_.br_velocity = (vehicle_moving_) ? hw_commands_[5] / RPM_TO_RADPS : 0.0f;
+        drive_commands_.fl_velocity = (vehicle_moving_) ? hw_commands_[0] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.fr_velocity = (vehicle_moving_) ? hw_commands_[1] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.ml_velocity = (vehicle_moving_) ? hw_commands_[2] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.mr_velocity = (vehicle_moving_) ? hw_commands_[3] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.bl_velocity = (vehicle_moving_) ? hw_commands_[4] * RADPS_TO_DEGPM : 0.0f;
+        drive_commands_.br_velocity = (vehicle_moving_) ? hw_commands_[5] * RADPS_TO_DEGPM : 0.0f;
 
         drive_hardware_.write(static_cast<void*>(&drive_commands_));
 

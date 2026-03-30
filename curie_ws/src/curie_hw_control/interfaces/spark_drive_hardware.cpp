@@ -11,9 +11,10 @@ hardware::SparkDriveInterface::SparkDriveInterface() :
 
 }
 
-int8_t hardware::SparkDriveInterface::initialize()
+int8_t hardware::SparkDriveInterface::initialize(void* config)
 {
-    can_transport_.open(CAN_INTERFACE, SPARK_DRIVETRAIN);
+    bool isVCAN = (config != nullptr) ? *(static_cast<bool*>(config)) : false;
+    can_transport_.open(isVCAN ? "vcan0" : CAN_INTERFACE, SPARK_DRIVETRAIN);
     if (!can_transport_.isOpen())
     {
         return -1;
