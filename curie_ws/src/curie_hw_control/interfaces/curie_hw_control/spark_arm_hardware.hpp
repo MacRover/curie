@@ -12,10 +12,10 @@
 
 namespace hardware
 {
-    class SparkDriveInterface : public HardwareInterface
+    class SparkArmInterface : public HardwareInterface
     {
     public:
-        SparkDriveInterface();
+        SparkArmInterface();
 
         int8_t initialize(void* config) override;
 
@@ -30,11 +30,10 @@ namespace hardware
     private:
         std::mutex read_mtx;
         spark_mmrt::can::SocketCanTransport can_transport_;
-        SparkMax front_left_;
-        SparkMax front_right_;
-        SparkMax mid_left_;
-        SparkMax mid_right_;
-        SparkMax back_left_;
-        SparkMax back_right_;
+        SparkMax base_;
+        SparkMax shoulder_;
+        SparkMax elbow_;
+        SparkMax wrist_roll_;
+        SparkMax wrist_pitch_;
     };
 }

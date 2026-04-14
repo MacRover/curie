@@ -18,10 +18,10 @@
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="world_joint" type="fixed" parent_frame="world_joint" child_link="Baseplate_Part"/>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
-    <disable_collisions link1="Baseplate_Part" link2="Base" reason="Adjacent"/>
+    <disable_collisions link1="Base" link2="Baseplate_Part" reason="Adjacent"/>
+    <disable_collisions link1="Base" link2="Bicep_Linkage" reason="Adjacent"/>
+    <disable_collisions link1="Base" link2="Forearm_Linkage" reason="Never"/>
     <disable_collisions link1="Bicep_Linkage" link2="Forearm_Linkage" reason="Adjacent"/>
-    <disable_collisions link1="Bicep_Linkage" link2="Base" reason="Adjacent"/>
-    <disable_collisions link1="Forearm_Linkage" link2="Base" reason="Never"/>
     <disable_collisions link1="Forearm_Linkage" link2="Wrist_Base" reason="Adjacent"/>
     <disable_collisions link1="Forearm_Linkage" link2="Wrist_Pitch" reason="Never"/>
     <disable_collisions link1="Wrist_Base" link2="Wrist_Pitch" reason="Adjacent"/>

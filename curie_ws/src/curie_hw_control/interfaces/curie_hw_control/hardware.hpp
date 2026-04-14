@@ -10,7 +10,7 @@ namespace hardware
         /**
          * @brief Initialize hardware interface. Anything that needs to be setup should be done here
          */
-        virtual int8_t initialize() = 0;
+        virtual int8_t initialize(void* config) = 0;
         /**
          * @brief Shutdown hardware interface. Anything that needs to be cleaned up before exiting any 
          * process should be done here

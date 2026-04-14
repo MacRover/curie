@@ -1,5 +1,5 @@
-#ifndef CURIE_DRIVE_CONTROLLER__DRIVE_CONTROLLER_HPP_
-#define CURIE_DRIVE_CONTROLLER__DRIVE_CONTROLLER_HPP_
+#ifndef CURIE_ARM_CONTROLLER__ARM_CONTROLLER_HPP_
+#define CURIE_ARM_CONTROLLER__ARM_CONTROLLER_HPP_
 
 #include <vector>
 #include <thread>
@@ -11,14 +11,14 @@
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "curie_hw_control/spark_drive_hardware.hpp"
+#include "curie_hw_control/spark_arm_hardware.hpp"
 
-namespace curie_drive_controller
+namespace curie_arm_controller
 {
-    class CurieDiffDriveController : public hardware_interface::SystemInterface
+    class CurieArmController : public hardware_interface::SystemInterface
     {
     public:
-        RCLCPP_SHARED_PTR_DEFINITIONS(CurieDiffDriveController)
+        RCLCPP_SHARED_PTR_DEFINITIONS(CurieArmController)
 
         hardware_interface::CallbackReturn on_init(
             const hardware_interface::HardwareInfo & info) override;
@@ -39,18 +39,22 @@ namespace curie_drive_controller
         hardware_interface::return_type write(
             const rclcpp::Time & time, const rclcpp::Duration & period) override;
         
-        ~CurieDiffDriveController() override;
+        ~CurieArmController() override;
 
     private:
-        std::thread drive_hw_thread_;
-        hardware::SparkDriveInterface drive_hardware_;
-        std::vector<double> wheel_velocities_;
+        std::thread arm_hw_thread_;
+        hardware::SparkArmInterface arm_hardware_;
+        std::vector<double> joint_velocities_;
+        std::vector<double> joint_positions_;
         std::vector<double> hw_commands_;
 
-        SparkCommand drive_commands_;
-        SparkStatus drive_status_;
-
-        bool wheel_state_;
+        SparkCommand commands_;
+        SparkStatus status_;
     };
 }
-#endif  // CURIE_DRIVE_CONTROLLER__DRIVE_CONTROLLER_HPP_
+
+
+
+
+
+#endif

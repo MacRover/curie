@@ -19,6 +19,8 @@ add_library(
   lib/spark_mmrt/src/can/SocketCanTransport.cpp
 
   interfaces/spark_drive_hardware.cpp
+  interfaces/spark_arm_hardware.cpp
+  interfaces/spark_arm_velocity_hardware.cpp
 )
 target_include_directories(hw_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/spark_mmrt/include>
