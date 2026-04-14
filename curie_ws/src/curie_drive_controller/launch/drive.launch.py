@@ -94,6 +94,15 @@ def generate_launch_description():
         arguments=["mock_diffbot_base_controller", "--controller-manager", "/controller_manager"],
     )
 
+    heartbeat_node = Node(
+        package="curie_hw_control",
+        executable="sparkmax_heartbeat",
+        name="heartbeat_node",
+        parameters=[{
+            "can_interface": use_vcan
+        }],
+    )
+
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -111,6 +120,7 @@ def generate_launch_description():
     )
 
     nodes = [
+        heartbeat_node,
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,

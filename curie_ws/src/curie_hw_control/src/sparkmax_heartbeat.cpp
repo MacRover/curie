@@ -2,7 +2,8 @@
 
 SparkMaxHeartbeat::SparkMaxHeartbeat(std::string name) : Node(name), roboRIO_(can_transport_), enabled(true)
 {
-    can_transport_.open("vcan0");
+    this->declare_parameter("use_vcan", true);
+    can_transport_.open(this->get_parameter("use_vcan").as_bool() ? "vcan0" : "can0");
     enable_srv_ = this->create_service<std_srvs::srv::SetBool>(
         "heartbeat/enable",
         std::bind(&SparkMaxHeartbeat::_enable_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)

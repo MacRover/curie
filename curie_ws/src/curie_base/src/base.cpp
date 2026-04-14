@@ -43,10 +43,15 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) : Node("base
     drive_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel", 10);
 }
 
+double base::Basestation::_map(double value, double istart, double iend, double ostart, double oend)
+{
+    return ostart + (oend - ostart) * (value - istart) / (iend - istart);
+}
+
 void base::Basestation::_joy_drive_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
     cmd_vel_msg_.header.stamp = this->now();
-    double turbo_factor = 1.0f + msg->axes[RIGHT_TRIGGER] * turbo_multiplier;
+    double turbo_factor = this->_map(msg->axes[RIGHT_TRIGGER], 1.0, -1.0, 1.0, turbo_multiplier);
     
     cmd_vel_msg_.twist.linear.x = msg->axes[LEFT_Y] * max_linear_speed * turbo_factor;
     cmd_vel_msg_.twist.angular.z = msg->axes[RIGHT_X] * max_angular_speed * turbo_factor;
