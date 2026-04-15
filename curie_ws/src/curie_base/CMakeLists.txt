@@ -11,28 +11,30 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
-add_library(base_component SHARED src/base.cpp)
+add_library(base_main_component SHARED src/base.cpp)
 ament_target_dependencies(
-  base_component PUBLIC
+  base_main_component PUBLIC
   rclcpp
   rclcpp_components
   geometry_msgs
   sensor_msgs
+  std_srvs
 )
-target_include_directories(base_component PUBLIC
+target_include_directories(base_main_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 rclcpp_components_register_node(
-    base_component
+    base_main_component
     PLUGIN "base::Basestation"
-    EXECUTABLE base_driver
+    EXECUTABLE base_main
 )
 
-ament_export_targets(export_base_component)
-install(TARGETS base_component
-        EXPORT export_base_component
+ament_export_targets(export_base_main_component)
+install(TARGETS base_main_component
+        EXPORT export_base_main_component
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin

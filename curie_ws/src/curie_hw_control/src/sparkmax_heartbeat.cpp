@@ -22,6 +22,7 @@ void SparkMaxHeartbeat::_enable_callback(
     (void)request_header;
     enabled = req->data;
     resp->success = true;
+    resp->message = enabled ? "Robot enabled" : "Robot disabled";
 }
 
 int main(int argc, char ** argv)
