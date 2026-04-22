@@ -99,7 +99,7 @@ def generate_launch_description():
         executable="sparkmax_heartbeat",
         name="heartbeat_node",
         parameters=[{
-            "can_interface": use_vcan
+            "use_vcan": use_vcan
         }],
     )
 
