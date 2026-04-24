@@ -40,4 +40,9 @@ install(TARGETS base_main_component
         RUNTIME DESTINATION bin
 )
 
+# Install launch and config files
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 ament_package()

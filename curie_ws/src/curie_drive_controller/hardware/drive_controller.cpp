@@ -26,6 +26,7 @@ hardware_interface::CallbackReturn CurieDiffDriveController::on_init(
     drive_hw_thread_ = std::thread(&hardware::SparkDriveInterface::run, &drive_hardware_);
     wheel_velocities_.resize(info_.joints.size(), 0.0);
     hw_commands_.resize(info_.joints.size(), 0.0);
+    memset(&drive_status_, 0, sizeof(drive_status_));
 
     wheel_state_ = true;
 

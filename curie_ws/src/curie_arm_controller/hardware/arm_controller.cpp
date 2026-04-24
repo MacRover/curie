@@ -27,6 +27,7 @@ hardware_interface::CallbackReturn CurieArmController::on_init(
     joint_velocities_.resize(info_.joints.size(), 0.0);
     joint_positions_.resize(info_.joints.size(), 0.0);
     hw_commands_.resize(info_.joints.size(), 0.0);
+    memset(&status_, 0, sizeof(status_));
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
