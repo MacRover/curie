@@ -3,11 +3,12 @@ controller_manager:
   ros__parameters:
     update_rate: 20  # Hz
 
-    joint_state_broadcaster:
-      type: joint_state_broadcaster/JointStateBroadcaster
-
     arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
 
 arm_controller:
   ros__parameters:
@@ -18,7 +19,6 @@ arm_controller:
       - Wrist_pitch_joint
     command_interfaces:
       - position
-      - velocity
     state_interfaces:
       - position
       - velocity

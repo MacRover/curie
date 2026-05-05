@@ -7,42 +7,8 @@
 #include <chrono>
 #include <optional>
 
+#include "sparks.hpp"
 #include "hardware.hpp"
-#include "spark_mmrt/can/SocketCanTransport.hpp"
-#include "spark_mmrt/device/SparkMax.hpp"
-
-#define CAN_INTERFACE "can0"
-// #define CAN_INTERFACE "vcan0" // For testing
-
-typedef enum : uint8_t
-{
-    FRONT_LEFT = (SPARK_DRIVETRAIN << 4) | 1,
-    FRONT_RIGHT = (SPARK_DRIVETRAIN << 4) | 2,
-    MID_LEFT = (SPARK_DRIVETRAIN << 4) | 3,
-    MID_RIGHT = (SPARK_DRIVETRAIN << 4) | 4,
-    BACK_LEFT = (SPARK_DRIVETRAIN << 4) | 5,
-    BACK_RIGHT = (SPARK_DRIVETRAIN << 4) | 6
-} SparkDriveID;
-
-typedef struct
-{
-    float fl_velocity;
-    float fr_velocity;
-    float ml_velocity;
-    float mr_velocity;
-    float bl_velocity;
-    float br_velocity;
-} SparkDriveCommand;
-
-typedef struct
-{
-    Status2 fl_status;
-    Status2 fr_status;
-    Status2 ml_status;
-    Status2 mr_status;
-    Status2 bl_status;
-    Status2 br_status;
-} SparkDriveStatus;
 
 namespace hardware
 {
@@ -51,7 +17,7 @@ namespace hardware
     public:
         SparkDriveInterface();
 
-        int8_t initialize() override;
+        int8_t initialize(void* config) override;
 
         int8_t shutdown() override;
 

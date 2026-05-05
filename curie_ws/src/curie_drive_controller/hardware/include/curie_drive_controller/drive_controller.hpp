@@ -45,11 +45,10 @@ namespace curie_drive_controller
         std::thread drive_hw_thread_;
         hardware::SparkDriveInterface drive_hardware_;
         std::vector<double> wheel_velocities_;
-        std::vector<double> wheel_positions_;
         std::vector<double> hw_commands_;
 
-        SparkDriveCommand drive_commands_;
-        SparkDriveStatus drive_status_;
+        SparkCommand drive_commands_;
+        SparkStatus drive_status_;
 
         bool wheel_state_;
     };
