@@ -5,6 +5,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from geometry_msgs.msg import PoseStamped
 from moveit_msgs.action import MoveGroup
+from sensor_msgs.msg import JointState
 from moveit_msgs.msg import (
     MotionPlanRequest,
     Constraints,
@@ -26,6 +27,15 @@ class ArmKeyPresser(Node):
             self, MoveGroup, '/move_action',
             callback_group=self._cb_group)
         self.get_logger().info('Connected!')
+        self.subscription = self.create_subscription(
+            JointState,
+            '/joint_states',
+            self._joint_state_callback,
+            10)
+        self.subscription  # prevent unused variable warning
+
+    def _joint_state_callback(self, msg: JointState):
+        self.current_joint_state = msg
 
     def move_to_pose(self, x, y, z, ox=0.233, oy=-0.252, oz=-0.689, ow=0.639):
         target_pose = PoseStamped()
@@ -171,7 +181,7 @@ def main(args=None):
 
     time.sleep(1.0)  # give executor time to start
 
-    node.move_to_joints([1.9e-05, -0.1603, 0.0841, -0.0763])
+    node.move_to_pose(x=0.837, y=-0.337, z=0.539)
     rclpy.shutdown()
 
 
