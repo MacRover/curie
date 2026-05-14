@@ -12,6 +12,7 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(curie_hw_control REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
 
 add_library(
   curie_arm_controller
@@ -33,6 +34,13 @@ ament_target_dependencies(
   curie_hw_control
 )
 
+add_executable(arm_movegroup controller/arm_movegroup.cpp)
+ament_target_dependencies(
+  arm_movegroup
+  rclcpp
+  moveit_ros_planning_interface
+)
+
 # Export hardware plugins
 pluginlib_export_plugin_description_file(hardware_interface curie_arm_controller.xml)
 
@@ -46,6 +54,11 @@ install(TARGETS curie_arm_controller
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+install(TARGETS
+  arm_movegroup
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)

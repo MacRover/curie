@@ -17,6 +17,7 @@
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>
+  <depend>moveit_ros_planning_interface</depend>
 
   <depend>curie_hw_control</depend>
 
