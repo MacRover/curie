@@ -154,7 +154,7 @@
     <child
       link="Bicep_Linkage" />
     <axis
-      xyz="0.0877948496902314 0 -0.996138576889716" />
+      xyz="0 0 1" />
   </joint>
   <link
     name="Forearm_Linkage">
@@ -207,7 +207,7 @@
     <child
       link="Forearm_Linkage" />
     <axis
-      xyz="0.0605805514570394 0 -0.998163311680589" />
+      xyz="0 0 -1" />
   </joint>
   <link
     name="Wrist_Base">
