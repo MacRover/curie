@@ -110,6 +110,10 @@ hardware_interface::return_type CurieArmController::write(
     // commands_.arm.wrist_roll_position = hw_commands_[4] * RAD_TO_DEG;
     commands_.arm.wrist_roll_position = 0.0f;
 
+    // RCLCPP_INFO(rclcpp::get_logger("ArmSystem"), "ARM COMMANDS: Base: %.2f, Shoulder: %.2f, Elbow: %.2f, Wrist Pitch: %.2f, Wrist Roll: %.2f",
+    //     commands_.arm.base_position, commands_.arm.shoulder_position, commands_.arm.elbow_position,
+    //     commands_.arm.wrist_pitch_position, commands_.arm.wrist_roll_position);
+
     if (arm_hardware_.write(static_cast<void*>(&commands_)) < 0)
     {
         return hardware_interface::return_type::ERROR;

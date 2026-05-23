@@ -6,11 +6,11 @@
 
 typedef enum : uint8_t
 {
-    BASE = (SPARK_ARM<< 4) | 1,
-    SHOULDER = (SPARK_ARM << 4) | 2,
-    ELBOW = (SPARK_ARM << 4) | 3,
+    BASE = (SPARK_ARM<< 4) | 2,
+    SHOULDER = (SPARK_ARM << 4) | 0,
+    ELBOW = (SPARK_ARM << 4) | 1,
     WRIST_ROLL = (SPARK_ARM << 4) | 4,
-    WRIST_PITCH = (SPARK_ARM << 4) | 5,
+    WRIST_PITCH = (SPARK_ARM << 4) | 3,
 } SparkArmID;
 
 typedef enum : uint8_t
