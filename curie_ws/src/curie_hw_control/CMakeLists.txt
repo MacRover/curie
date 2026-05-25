@@ -9,12 +9,14 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 # Creating and exporting hardware library to other packages
 add_library(
   hw_lib SHARED 
   lib/spark_mmrt/src/device/SparkMax.cpp
+  lib/spark_mmrt/src/device/roboRIO.cpp
   lib/spark_mmrt/src/frames/SparkFrames.cpp
   lib/spark_mmrt/src/can/SocketCanTransport.cpp
 
@@ -32,14 +34,21 @@ ament_export_include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/interfaces)
 
 add_executable(test_sparkmax src/test_sparkmax.cpp)
+add_executable(sparkmax_heartbeat src/sparkmax_heartbeat.cpp)
 ament_target_dependencies(test_sparkmax rclcpp std_msgs)
+ament_target_dependencies(sparkmax_heartbeat rclcpp std_srvs)
 target_include_directories(test_sparkmax PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/spark_mmrt/include>
   $<INSTALL_INTERFACE:include>)
+target_include_directories(sparkmax_heartbeat PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/spark_mmrt/include>
+  $<INSTALL_INTERFACE:include>)
 target_link_libraries(test_sparkmax hw_lib)
+target_link_libraries(sparkmax_heartbeat hw_lib)
 
-install(TARGETS test_sparkmax
+install(TARGETS test_sparkmax sparkmax_heartbeat
   DESTINATION lib/${PROJECT_NAME})
 
 install(
