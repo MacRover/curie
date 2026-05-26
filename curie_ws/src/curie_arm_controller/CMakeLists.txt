@@ -13,6 +13,7 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(curie_hw_control REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_library(
   curie_arm_controller
@@ -34,11 +35,19 @@ ament_target_dependencies(
   curie_hw_control
 )
 
-add_executable(arm_movegroup controller/arm_movegroup.cpp)
+add_executable(move_joints movement_plans/move_joints.cpp)
+add_executable(move_linear movement_plans/move_linear.cpp)
 ament_target_dependencies(
-  arm_movegroup
+  move_joints
   rclcpp
   moveit_ros_planning_interface
+  geometry_msgs
+)
+ament_target_dependencies(
+  move_linear
+  rclcpp
+  moveit_ros_planning_interface
+  geometry_msgs
 )
 
 # Export hardware plugins
@@ -57,7 +66,8 @@ install(TARGETS curie_arm_controller
 )
 
 install(TARGETS
-  arm_movegroup
+  move_joints
+  move_linear
   DESTINATION lib/${PROJECT_NAME}
 )
 
