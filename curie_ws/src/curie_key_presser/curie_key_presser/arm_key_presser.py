@@ -19,6 +19,11 @@ import time
 import threading
 
 
+'''
+#Want to relate the camera to all the other joints in the arm. 
+'''
+
+
 class ArmKeyPresser(Node):
     def __init__(self):
         super().__init__('arm_key_presser')
@@ -27,15 +32,24 @@ class ArmKeyPresser(Node):
             self, MoveGroup, '/move_action',
             callback_group=self._cb_group)
         self.get_logger().info('Connected!')
-        self.subscription = self.create_subscription(
+        self.joint_state_subscription = self.create_subscription(
             JointState,
             '/joint_states',
             self._joint_state_callback,
             10)
-        self.subscription  # prevent unused variable warning
+        self.key_target_pose_subscription = self.create_subscription(
+            PoseStamped, 
+            '/key_target_pose', 
+            self._key_target_callback,
+            10)
+        self.current_joint_state = None
+        self.current_pose_stamped = None
 
     def _joint_state_callback(self, msg: JointState):
         self.current_joint_state = msg
+    
+    def _key_target_callback(self, msg: PoseStamped): 
+        self.current_pose_stamped = msg
 
     def move_to_pose(self, x, y, z, ox=0.233, oy=-0.252, oz=-0.689, ow=0.639):
         target_pose = PoseStamped()
@@ -54,7 +68,7 @@ class ArmKeyPresser(Node):
 
         bounding_box = SolidPrimitive()
         bounding_box.type = SolidPrimitive.BOX
-        bounding_box.dimensions = [0.01, 0.01, 0.01]
+        bounding_box.dimensions = [0.05, 0.05, 0.05]
 
         bv = BoundingVolume()
         bv.primitives = [bounding_box]
@@ -83,9 +97,10 @@ class ArmKeyPresser(Node):
         request.max_velocity_scaling_factor = 0.1
         request.max_acceleration_scaling_factor = 0.1
 
+        request.start_state.is_diff = True
         goal = MoveGroup.Goal()
         goal.request = request
-        goal.planning_options.plan_only = False
+        goal.planning_options.plan_only = True
 
         self.get_logger().info(f'Sending goal: x={x:.3f} y={y:.3f} z={z:.3f}')
         future = self._action_client.send_goal_async(goal)
@@ -181,9 +196,9 @@ def main(args=None):
 
     time.sleep(1.0)  # give executor time to start
 
-    node.move_to_pose(x=0.837, y=-0.337, z=0.539)
+    node.move_to_pose(x=0.891,  y=-0.348, z=0.670)
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
-    main()
+    if __name__ == '__main__':
+        main()

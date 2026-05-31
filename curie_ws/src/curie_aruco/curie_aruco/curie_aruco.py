@@ -8,7 +8,9 @@ from std_msgs.msg import String
 import threading
 import time
 
-
+'''
+CREATE A PACKAGE FOR THIS
+'''
 gstreamer_pipeline = ('udpsrc port=40627 caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265" ! rtpjitterbuffer latency=50 ! rtph265depay ! h265parse ! queue max-size-buffers=20 max-size-time=0 max-size-bytes=0 leaky=downstream ! avdec_h265 ! videoconvert ! appsink')
 
 camera_calibration = np.array([
@@ -59,6 +61,9 @@ def make_key_positions():
 
 class MarkerDetectionSystem(Node):
 
+    '''
+        Need this to be more modular - not just aruco's 0-3 can be any of the aruco's from the library. 
+    '''
     MARKER_POSITIONS = {
         0: np.array([0.0, 0.0, 0.0]),
         1: np.array([W,   0.0, 0.0]),
@@ -133,7 +138,7 @@ class MarkerDetectionSystem(Node):
             self.get_logger().info(f'{self.target_key} -> {key_pos}')
 
     def detect_markers(self, corners, ids):
-        if ids is None or len(ids) < 4:
+        if ids is None:
             return None, None
 
         object_pts, image_pts = [], []
@@ -144,16 +149,16 @@ class MarkerDetectionSystem(Node):
                 center = corners[i][0].mean(axis=0)
                 image_pts.append(center)
 
-        if len(object_pts) < 3:
+        if len(object_pts) < 4:
             return None, None
 
-        object_pts = np.array(object_pts, dtype=np.float32)
-        image_pts = np.array(image_pts, dtype=np.float32)
+        object_pts = np.array(object_pts, dtype=np.float32).reshape(-1, 1, 3)
+        image_pts  = np.array(image_pts,  dtype=np.float32).reshape(-1, 1, 2)
 
         success, rvec, tvec = cv2.solvePnP(
             object_pts, image_pts,
             camera_calibration, dist_coefficients,
-            flags=cv2.SOLVEPNP_ITERATIVE
+            flags=cv2.SOLVEPNP_IPPE
         )
 
         if not success:
@@ -161,21 +166,11 @@ class MarkerDetectionSystem(Node):
 
         return rvec, tvec
 
-    def key_to_3d(self, key, rvec, tvec):
-        if key not in self.KEY_POSITIONS:
-            raise ValueError(f"Unknown key: '{key}'")
-
-        x, y = self.KEY_POSITIONS[key]
-        key_pos_kb = np.array([[x, y, 0.0]], dtype=np.float32)
-
-        R, _ = cv2.Rodrigues(rvec)
-        pos_camera = R @ key_pos_kb.T + tvec
-        return pos_camera.flatten()
-
     def publish_pose(self, publisher, position, rvec=None):
         msg = PoseStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = 'camera_frame'
+        position = np.array(position).flatten()
         msg.pose.position.x = float(position[0])
         msg.pose.position.y = float(position[1])
         msg.pose.position.z = float(position[2])
@@ -187,6 +182,17 @@ class MarkerDetectionSystem(Node):
             msg.pose.orientation.w = 1.0
 
         publisher.publish(msg)
+
+    def key_to_3d(self, key, rvec, tvec):
+        if key not in self.KEY_POSITIONS:
+            raise ValueError(f"Unknown key: '{key}'")
+
+        x, y = self.KEY_POSITIONS[key]
+        key_pos_kb = np.array([[x, y, 0.0]], dtype=np.float32)
+
+        R, _ = cv2.Rodrigues(rvec)
+        pos_camera = R @ key_pos_kb.T + tvec
+        return pos_camera.flatten()
 
     def rotation_matrix_to_quaternion(self, R):
         trace = R[0, 0] + R[1, 1] + R[2, 2]
