@@ -8,31 +8,38 @@
                 <plugin>curie_arm_controller/CurieArmController</plugin>
                 <param name="use_vcan">${use_vcan}</param>
             </hardware>
-            <joint name="Base_joint">
+            <joint name="base_rotation">
                 <command_interface name="position"/>
                 <state_interface name="position">
-                  <param name="initial_value">${initial_positions['Base_joint']}</param>
+                  <param name="initial_value">${initial_positions['base_rotation']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="Bicep_Joint">
+            <joint name="shoulder_joint">
                 <command_interface name="position"/>
                 <state_interface name="position">
-                  <param name="initial_value">${initial_positions['Bicep_Joint']}</param>
+                  <param name="initial_value">${initial_positions['shoulder_joint']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="Forearm_Joint">
+            <joint name="elbow_joint">
                 <command_interface name="position"/>
                 <state_interface name="position">
-                  <param name="initial_value">${initial_positions['Forearm_Joint']}</param>
+                  <param name="initial_value">${initial_positions['elbow_joint']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="Wrist_pitch_joint">
+            <joint name="wrist_pitch">
                 <command_interface name="position"/>
                 <state_interface name="position">
-                  <param name="initial_value">${initial_positions['Wrist_pitch_joint']}</param>
+                  <param name="initial_value">${initial_positions['wrist_pitch']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
+            <joint name="wrist_roll">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['wrist_roll']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>

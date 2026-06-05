@@ -7,18 +7,26 @@ controller_manager:
       type: joint_trajectory_controller/JointTrajectoryController
 
 
+    hand_controller:
+      type: position_controllers/GripperActionController
+
+
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
 arm_controller:
   ros__parameters:
     joints:
-      - Base_joint
-      - Bicep_Joint
-      - Forearm_Joint
-      - Wrist_pitch_joint
+      - base_rotation
+      - shoulder_joint
+      - elbow_joint
+      - wrist_pitch
+      - wrist_roll
     command_interfaces:
       - position
     state_interfaces:
       - position
       - velocity
+hand_controller:
+  ros__parameters:
+    joint: gripper_joint
