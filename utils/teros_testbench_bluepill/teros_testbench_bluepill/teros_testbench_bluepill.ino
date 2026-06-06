@@ -43,29 +43,48 @@ char legacy_checksum(const char* response_bytes, int len) {
   return (char)((sum_val % 64) + 32);
 }
 
-void parse_data(const char* data_str) {
-  float vwc, temp, ec;
+// UPDATED: Using strtok and atof instead of sscanf
+void parse_data(char* data_str) {
+  float vwc = 0.0, temp = 0.0, ec = 0.0;
   
-  // sscanf automatically skips whitespace and tabs to find the numbers
-  int parsed = sscanf(data_str, "%f %f %f", &vwc, &temp, &ec);
+  // strtok breaks the string into "tokens" separated by spaces or tabs
+  char* token = strtok(data_str, " \t");
   
-  if (parsed == 3) {
-    DEBUG_SERIAL.print("VWC Counts: "); 
-    DEBUG_SERIAL.print(vwc);
-    DEBUG_SERIAL.print(" \tTemperature: "); 
-    DEBUG_SERIAL.print(temp);
-    DEBUG_SERIAL.print(" \tElectrical Conductivity: "); 
-    DEBUG_SERIAL.println(ec);
-  } else {
-    DEBUG_SERIAL.print("Error parsing data. Raw string: ");
-    DEBUG_SERIAL.println(data_str);
+  if (token != NULL) {
+    vwc = atof(token); // Convert to float
+    token = strtok(NULL, " \t"); 
+    
+    if (token != NULL) {
+      temp = atof(token);
+      token = strtok(NULL, " \t"); 
+      
+      if (token != NULL) {
+        ec = atof(token);
+        
+        DEBUG_SERIAL.print("VWC Counts: "); 
+        DEBUG_SERIAL.print(vwc);
+        DEBUG_SERIAL.print(" \tTemperature: "); 
+        DEBUG_SERIAL.print(temp);
+        DEBUG_SERIAL.print(" \tElectrical Conductivity: "); 
+        DEBUG_SERIAL.println(ec);
+        return; 
+      }
+    }
   }
+
+  DEBUG_SERIAL.print("Error parsing data. Raw string: ");
+  DEBUG_SERIAL.println(data_str);
 }
 
 void loop() {
   // 1. Read incoming bytes into the buffer
   while (SENSOR_SERIAL.available() > 0) {
     char c = SENSOR_SERIAL.read();
+
+    // THE FIX: Ignore leftover newlines or blank spaces if the buffer is empty.
+    if (buf_idx == 0 && (c == '\n' || c == '\r' || c == ' ')) {
+      continue;
+    }
     
     // Prevent buffer overflow
     if (buf_idx < sizeof(buffer) - 1) {
