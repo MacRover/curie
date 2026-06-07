@@ -62,17 +62,17 @@ class MarkerDetectionSystem(Node):
         Need this to be more modular - not just aruco's 0-3 can be any of the aruco's from the library. 
 
         Make it so that a string can move
-    '''
+    ''' 
 
-    MARKER_POSITIONS = {
-        0: np.array([0.0, 0.0, 0.0]),
-        1: np.array([W,   0.0, 0.0]),
-        2: np.array([0.0, H,   0.0]),
-        3: np.array([W,   H,   0.0]),
-    }
-
-    def __init__(self):
+    def __init__(self, keyboard_width=0.354, keyboard_height=0.123):
         super().__init__('marker_detection_system')
+
+        self.MARKER_POSITIONS = {
+            0: np.array([0.0, 0.0, 0.0]), 
+            1: np.array([keyboard_width, 0.0, 0.0]), 
+            2: np.array([0.0, keyboard_height, 0.0]), 
+            3: np.array([keyboard_width, keyboard_height, 0.0]),
+        }
 
         self.KEY_POSITIONS = make_key_positions()
 
@@ -141,14 +141,34 @@ class MarkerDetectionSystem(Node):
         if ids is None:
             return None, None
 
-        object_pts, image_pts = [], []
+        if len(ids) < 4:
+            return None, None
+
+        centers = []
 
         for i, marker_id in enumerate(ids.flatten()):
-            if marker_id in self.MARKER_POSITIONS:
+            center = corners[i][0].mean(axis=0)
+            centers.append((center, marker_id, i))
+        
+        centers.sort(key=lambda c: c[0][0] + c[0][1]) 
+        tl, br = centers[0], centers[-1] 
+        remaining = sorted(centers[1:3], key=lambda c: c[0][0]) 
+        bl, tr = remaining[0], remaining[1]
+
+        self.MARKER_POSITIONS = {
+            tl[1]: np.array([0.0, 0.0, 0.0], dtype=np.float32), 
+            tr[1]: np.array([W, 0.0, 0.0], dtype=np.float32),
+            bl[1]: np.array([0.0, H, 0.0], dtype=np.float32),
+            br[1]: np.array([W, H, 0.0], dtype=np.float32),
+        }
+
+        object_pts, image_pts = [], []
+        for i, marker_id in enumerate(ids.flatten()):
+            if marker_id in self.MARKER_POSITIONS: 
                 object_pts.append(self.MARKER_POSITIONS[marker_id])
                 center = corners[i][0].mean(axis=0)
-                image_pts.append(center)
-
+                image_pts.append(center) 
+        
         if len(object_pts) < 4:
             return None, None
 
