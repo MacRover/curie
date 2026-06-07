@@ -5,7 +5,8 @@
 
         <ros2_control name="${name}" type="system">
             <hardware>
-                <plugin>curie_arm_controller/CurieArmController</plugin>
+                <!--<plugin>curie_arm_controller/CurieArmController</plugin>   mock components since only testing software-->
+                <plugin>mock_components/GenericSystem</plugin>
                 <param name="use_vcan">${use_vcan}</param>
             </hardware>
             <joint name="Base_joint">

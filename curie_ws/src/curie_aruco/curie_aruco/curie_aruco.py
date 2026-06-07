@@ -8,9 +8,6 @@ from std_msgs.msg import String
 import threading
 import time
 
-'''
-CREATE A PACKAGE FOR THIS
-'''
 gstreamer_pipeline = ('udpsrc port=40627 caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265" ! rtpjitterbuffer latency=50 ! rtph265depay ! h265parse ! queue max-size-buffers=20 max-size-time=0 max-size-bytes=0 leaky=downstream ! avdec_h265 ! videoconvert ! appsink')
 
 camera_calibration = np.array([
@@ -63,7 +60,10 @@ class MarkerDetectionSystem(Node):
 
     '''
         Need this to be more modular - not just aruco's 0-3 can be any of the aruco's from the library. 
+
+        Make it so that a string can move
     '''
+
     MARKER_POSITIONS = {
         0: np.array([0.0, 0.0, 0.0]),
         1: np.array([W,   0.0, 0.0]),
@@ -81,7 +81,7 @@ class MarkerDetectionSystem(Node):
         self.detector = aruco.ArucoDetector(aruco_dictionary, aruco_params)
 
         # open camera — use index 0 with default backend (V4L2 on Linux)
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
         time.sleep(1.0)
         for _ in range(10):
             self.cap.read()
@@ -90,7 +90,7 @@ class MarkerDetectionSystem(Node):
             self.get_logger().error('Failed to open camera!')
 
         self.pose_pub = self.create_publisher(PoseStamped, 'keyboard_pose', 10)
-        self.key_target_pub = self.create_publisher(PoseStamped, 'key_target_pose', 10)
+        self.key_target_pub = self.create_publisher(PoseStamped, 'key_target_pose', 1)
         self.target_key_sub = self.create_subscription(
             String,
             'target_key',
