@@ -15,17 +15,19 @@ int main(int argc, char** argv)
   move_group.setPlanningTime(5.0);
 
   std::vector<double> target_joint_positions_1 = {
-    0.0,  // base
-    0.6,  // shoulder
-    1.2,  // elbow
-    0.0   // wrist pitch
-  };
-  
-  std::vector<double> target_joint_positions_2 = {
-    -0.78,  // base
-    0.0,  // shoulder
+    -0.4,  // base
+    0.78,  // shoulder
     0.5,  // elbow
-    0.0   // wrist pitch
+    0.3,   // wrist pitch
+    0.78    // wrist roll
+  };
+
+  std::vector<double> target_joint_positions_2 = {
+    0.0,  // base
+    0.2,  // shoulder
+    1.2,  // elbow
+    0.0,   // wrist pitch
+    0.0   // wrist roll
   };
 
   for (int i = 0; i < 10; i++)

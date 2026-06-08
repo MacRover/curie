@@ -21,22 +21,25 @@ int8_t hardware::SparkArmInterface::initialize(void* config)
         return -1;
     }
 
-    // This is needed for some reason; When a SparkMAX is power cycled in closed loop mode, 
-    // its setpoint is relative to its current position rather than the zero of the encoder.
-    // Perhaps something in the firmwares control loop is accidentially being saved to memory persistently?
-    // For now, the fix is to refresh the sensor type upon initializing the hardware interface
-    std::optional<ParamWriteResponse> response;
-    CHECK_RET_VAL(response, base_.setSensorType(NONE, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, shoulder_.setSensorType(NONE, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, elbow_.setSensorType(NONE, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, wrist_roll_.setSensorType(NONE, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, wrist_pitch_.setSensorType(NONE, std::chrono::milliseconds(100)));
+    if (!isVCAN)
+    {
+        // This is needed for some reason; When a SparkMAX is power cycled in closed loop mode, 
+        // its setpoint is relative to its current position rather than the zero of the encoder.
+        // Perhaps something in the firmwares control loop is accidentially being saved to memory persistently?
+        // For now, the fix is to refresh the sensor type upon initializing the hardware interface
+        std::optional<ParamWriteResponse> response;
+        CHECK_RET_VAL(response, base_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, shoulder_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, elbow_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_roll_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_pitch_.setSensorType(NONE, std::chrono::milliseconds(100)));
 
-    CHECK_RET_VAL(response, base_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, shoulder_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, elbow_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, wrist_roll_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
-    CHECK_RET_VAL(response, wrist_pitch_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, base_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, shoulder_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, elbow_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_roll_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_pitch_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+    }
     return 0;
 }
 
