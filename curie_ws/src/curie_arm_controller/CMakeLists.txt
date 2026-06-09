@@ -36,7 +36,7 @@ ament_target_dependencies(
 )
 
 add_executable(move_joints movement_plans/move_joints.cpp)
-add_executable(move_linear movement_plans/move_linear.cpp)
+add_executable(move_zig_zag movement_plans/move_zig_zag.cpp)
 ament_target_dependencies(
   move_joints
   rclcpp
@@ -44,7 +44,7 @@ ament_target_dependencies(
   geometry_msgs
 )
 ament_target_dependencies(
-  move_linear
+  move_zig_zag
   rclcpp
   moveit_ros_planning_interface
   geometry_msgs
@@ -67,7 +67,7 @@ install(TARGETS curie_arm_controller
 
 install(TARGETS
   move_joints
-  move_linear
+  move_zig_zag
   DESTINATION lib/${PROJECT_NAME}
 )
 

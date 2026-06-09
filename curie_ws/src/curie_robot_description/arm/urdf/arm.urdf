@@ -92,7 +92,7 @@
   </link>
   <joint
     name="base_rotation"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="0 0 0"
       rpy="1.5708 0 0.087908" />
@@ -102,6 +102,11 @@
       link="shoulder_Link" />
     <axis
       xyz="0 1 0" />
+    <limit
+      lower="-2.35"
+      upper="2.35"
+      effort="5"
+      velocity="5" />
   </joint>
   <link
     name="bicep_Link">
@@ -145,7 +150,7 @@
   </link>
   <joint
     name="shoulder_joint"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="0 0.22114 0"
       rpy="-0.031089 0.0056647 0.36044" />
@@ -155,6 +160,11 @@
       link="bicep_Link" />
     <axis
       xyz="0.087795 0 -0.99614" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="5"
+      velocity="5" />
   </joint>
   <link
     name="forearm_Link">
@@ -198,7 +208,7 @@
   </link>
   <joint
     name="elbow_joint"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="0.20793 0.43928 0.018326"
       rpy="-0.081535 0.027551 1.1836" />
@@ -208,6 +218,11 @@
       link="forearm_Link" />
     <axis
       xyz="0.060581 0 -0.99816" />
+    <limit
+      lower="-0.79"
+      upper="1.57"
+      effort="5"
+      velocity="5" />
   </joint>
   <link
     name="wrist_link">
@@ -251,7 +266,7 @@
   </link>
   <joint
     name="wrist_pitch"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="0.049101 -0.49007 0.022058"
       rpy="-2.3345 -1.5102 -3.1416" />
@@ -261,6 +276,11 @@
       link="wrist_link" />
     <axis
       xyz="1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="5"
+      velocity="5" />
   </joint>
   <link
     name="endeffector_link">
@@ -304,7 +324,7 @@
   </link>
   <joint
     name="wrist_roll"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="0.03651 -0.0078577 0.0078577"
       rpy="-2.3562 0 0" />
@@ -314,6 +334,11 @@
       link="endeffector_link" />
     <axis
       xyz="0 0 1" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="5"
+      velocity="5" />
   </joint>
   <link
     name="jaw_link">
@@ -357,7 +382,7 @@
   </link>
   <joint
     name="gripper"
-    type="continuous">
+    type="revolute">
     <origin
       xyz="0 -0.0155 -0.085565"
       rpy="1.5708 0 0" />
@@ -367,5 +392,10 @@
       link="jaw_link" />
     <axis
       xyz="1 0 0" />
+    <limit
+      lower="0"
+      upper="1.57"
+      effort="5"
+      velocity="5" />
   </joint>
 </robot>
