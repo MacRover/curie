@@ -95,6 +95,15 @@ hardware_interface::return_type CurieArmController::read(
     joint_velocities_[3] = status_.arm.wrist_pitch_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
     joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
 
+    // Shift domain from [0, 2*pi] to [-pi, pi]
+    for (size_t i = 0; i < joint_positions_.size(); i++)
+    {
+        if (joint_positions_[i] > M_PI)
+        {
+            joint_positions_[i] -= 2.0f * M_PI;
+        }
+    }
+
     return hardware_interface::return_type::OK;
 }
 

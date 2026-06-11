@@ -27,7 +27,7 @@ int main(int argc, char** argv)
   target_pose.orientation.y = -0.5;
   target_pose.orientation.z = -0.5;
   target_pose.orientation.w = 0.5;
-  target_pose.position.x = 0.3;
+  target_pose.position.x = 0.4;
   target_pose.position.y = -0.0555596;
   target_pose.position.z = 0.2;
 
