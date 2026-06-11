@@ -56,9 +56,9 @@ private:
         }
 
         std::string text = msg->data;
+        is_typing_ = true;
 
         typing_thread_ = std::thread([this, text]() {
-            is_typing_ = true;
 
             for (char c : text) {
                 std::string key(1, c);

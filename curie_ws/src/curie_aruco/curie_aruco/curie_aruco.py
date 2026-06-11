@@ -67,13 +67,6 @@ class MarkerDetectionSystem(Node):
     def __init__(self, keyboard_width=0.354, keyboard_height=0.123):
         super().__init__('marker_detection_system')
 
-        self.MARKER_POSITIONS = {
-            0: np.array([0.0, 0.0, 0.0]), 
-            1: np.array([keyboard_width, 0.0, 0.0]), 
-            2: np.array([0.0, keyboard_height, 0.0]), 
-            3: np.array([keyboard_width, keyboard_height, 0.0]),
-        }
-
         self.KEY_POSITIONS = make_key_positions()
 
         aruco_dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
