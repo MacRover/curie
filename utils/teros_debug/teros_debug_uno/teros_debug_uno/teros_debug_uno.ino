@@ -52,32 +52,30 @@ char legacy_checksum(const char* response_bytes, int len) {
 }
 
 // ---------------------------------------------------------
-// UPDATED PARSING LOGIC
+// UPDATED PARSING LOGIC (Floats Removed)
 // ---------------------------------------------------------
 void parse_data(char* data_str) {
-  float vwc = 0.0, temp = 0.0, ec = 0.0;
-  
   // strtok breaks the string into "tokens" separated by spaces or tabs
   char* token = strtok(data_str, " \t");
   
   if (token != NULL) {
-    vwc = atof(token); // atof converts a string to a float
-    token = strtok(NULL, " \t"); // Grab the next number
+    char* vwc_str = token; // Keep as text string
+    token = strtok(NULL, " \t"); // Grab the next token
     
     if (token != NULL) {
-      temp = atof(token);
-      token = strtok(NULL, " \t"); // Grab the last number
+      char* temp_str = token; // Keep as text string
+      token = strtok(NULL, " \t"); // Grab the last token
       
       if (token != NULL) {
-        ec = atof(token);
+        char* ec_str = token; // Keep as text string
         
-        // If we successfully grabbed all three, print them!
+        // If we successfully grabbed all three, print the strings directly!
         DEBUG_SERIAL.print("VWC Counts: "); 
-        DEBUG_SERIAL.print(vwc);
+        DEBUG_SERIAL.print(vwc_str);
         DEBUG_SERIAL.print(" \tTemperature: "); 
-        DEBUG_SERIAL.print(temp);
+        DEBUG_SERIAL.print(temp_str);
         DEBUG_SERIAL.print(" \tElectrical Conductivity: "); 
-        DEBUG_SERIAL.println(ec);
+        DEBUG_SERIAL.println(ec_str);
         return; // Success! Exit the function.
       }
     }
@@ -92,9 +90,6 @@ void parse_data(char* data_str) {
 // MAIN LOOP
 // ---------------------------------------------------------
 void loop() {
-  // ---------------------------------------------------------
-// MAIN LOOP
-// ---------------------------------------------------------
   // 1. Read incoming bytes into the buffer from Pin 10
   while (SENSOR_SERIAL.available() > 0) {
     char c = SENSOR_SERIAL.read();

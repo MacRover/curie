@@ -43,30 +43,29 @@ char legacy_checksum(const char* response_bytes, int len) {
   return (char)((sum_val % 64) + 32);
 }
 
-// UPDATED: Using strtok and atof instead of sscanf
+// UPDATED: Using strtok directly as strings, avoiding atof() and floats
 void parse_data(char* data_str) {
-  float vwc = 0.0, temp = 0.0, ec = 0.0;
-  
   // strtok breaks the string into "tokens" separated by spaces or tabs
   char* token = strtok(data_str, " \t");
   
   if (token != NULL) {
-    vwc = atof(token); // Convert to float
+    char* vwc_str = token; // Keep as text string
     token = strtok(NULL, " \t"); 
     
     if (token != NULL) {
-      temp = atof(token);
+      char* temp_str = token; // Keep as text string
       token = strtok(NULL, " \t"); 
       
       if (token != NULL) {
-        ec = atof(token);
+        char* ec_str = token; // Keep as text string
         
+        // Print the strings directly
         DEBUG_SERIAL.print("VWC Counts: "); 
-        DEBUG_SERIAL.print(vwc);
+        DEBUG_SERIAL.print(vwc_str);
         DEBUG_SERIAL.print(" \tTemperature: "); 
-        DEBUG_SERIAL.print(temp);
+        DEBUG_SERIAL.print(temp_str);
         DEBUG_SERIAL.print(" \tElectrical Conductivity: "); 
-        DEBUG_SERIAL.println(ec);
+        DEBUG_SERIAL.println(ec_str);
         return; 
       }
     }
