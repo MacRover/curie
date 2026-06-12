@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 
 add_library(base_main_component SHARED src/base.cpp)
@@ -19,6 +20,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_components
   geometry_msgs
+  trajectory_msgs
   sensor_msgs
   std_srvs
 )

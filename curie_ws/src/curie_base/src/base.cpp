@@ -49,12 +49,34 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) : Node("base
         "joy", 10, std::bind(&Basestation::_joy_drive_callback, this, std::placeholders::_1));
     drive_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel", 10);
 
+    arm_drive_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
+        "joy1", 10, std::bind(&Basestation::_joy_arm_callback, this, std::placeholders::_1));
+    arm_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>("arm_controller/joint_trajectory", 10);
+    traj_msg_.joint_names = {"base_rotation", "shoulder_joint", "elbow_joint", "wrist_pitch", "wrist_roll"};
+    traj_msg_.points.resize(1);
+
     RCLCPP_INFO(this->get_logger(), "Basestation OK");
 }
 
 double base::Basestation::_map(double value, double istart, double iend, double ostart, double oend)
 {
     return ostart + (oend - ostart) * (value - istart) / (iend - istart);
+}
+
+void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
+{
+    traj_msg_.header.stamp = this->now();
+    double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
+    
+    traj_msg_.points[0].positions = {
+        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -90.0, 90.0),
+        this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -85.0, 85.0),
+        this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -40.0, 85.0),
+        this->_map(pitch_axis, -1.0, 1.0, -85.0, 85.0),
+        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -85.0, 85.0),
+    };
+    traj_msg_.points[0].time_from_start = rclcpp::Duration(0, 0);
+    arm_pub_->publish(traj_msg_);
 }
 
 void base::Basestation::_joy_drive_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
