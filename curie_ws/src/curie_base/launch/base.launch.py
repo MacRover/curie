@@ -20,7 +20,7 @@ def generate_launch_description():
                 plugin="joy::Joy",
                 name="joy_drive_node",
                 parameters=[{
-                    "device_name": "/dev/input/js0"
+                    "device_id": 0,
                 }],
             ),
             ComposableNode(
@@ -28,7 +28,7 @@ def generate_launch_description():
                 plugin="joy::Joy",
                 name="joy_arm_node",
                 parameters=[{
-                    "device_name": "/dev/input/js1",
+                    "device_id": 1,
                     "autorepeat_rate": 0.0, # Only publish on joystick input, we don't want to accidentally interrupt the arm if its executing a trajectory
                 }],
                 remappings=[

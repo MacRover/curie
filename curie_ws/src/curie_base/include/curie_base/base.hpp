@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <math.h>
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"

@@ -1,5 +1,7 @@
 #include "curie_base/base.hpp"
 
+#define DEG_TO_RAD (M_PI / 180.0f)
+
 typedef enum : uint8_t
 {
     A = 0,
@@ -69,14 +71,16 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
     double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
     
     traj_msg_.points[0].positions = {
-        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -90.0, 90.0),
-        this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -85.0, 85.0),
-        this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -40.0, 85.0),
-        this->_map(pitch_axis, -1.0, 1.0, -85.0, 85.0),
-        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -85.0, 85.0),
+        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -90.0, 90.0) * DEG_TO_RAD,
+        this->_map(msg->axes[RIGHT_Y] * -1.0, -1.0, 1.0, -85.0, 85.0) * DEG_TO_RAD,
+        this->_map(msg->axes[LEFT_Y] * -1.0, -1.0, 1.0, -40.0, 85.0) * DEG_TO_RAD,
+        this->_map(pitch_axis, -1.0, 1.0, -85.0, 85.0) * DEG_TO_RAD,
+        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -85.0, 85.0) * DEG_TO_RAD,
     };
-    traj_msg_.points[0].time_from_start = rclcpp::Duration(0, 0);
+    traj_msg_.points[0].time_from_start = rclcpp::Duration(std::chrono::milliseconds(10));
     arm_pub_->publish(traj_msg_);
+
+    _handle_robot_state(msg->buttons[A], msg->buttons[B]);
 }
 
 void base::Basestation::_joy_drive_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
