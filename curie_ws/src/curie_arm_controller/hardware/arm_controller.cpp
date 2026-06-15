@@ -87,13 +87,22 @@ hardware_interface::return_type CurieArmController::read(
     joint_positions_[1] = status_.arm.shoulder_status.dutyCycleEncPosition / RAD_TO_DEG;
     joint_positions_[2] = status_.arm.elbow_status.dutyCycleEncPosition / RAD_TO_DEG;
     joint_positions_[3] = status_.arm.wrist_pitch_status.dutyCycleEncPosition / RAD_TO_DEG;
-    // joint_positions_[4] = status_.arm.wrist_roll_status.dutyCycleEncPosition / RAD_TO_DEG;
+    joint_positions_[4] = status_.arm.wrist_roll_status.dutyCycleEncPosition / RAD_TO_DEG;
 
     joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
     joint_velocities_[1] = status_.arm.shoulder_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
     joint_velocities_[2] = status_.arm.elbow_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
     joint_velocities_[3] = status_.arm.wrist_pitch_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    // joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+
+    // Shift domain from [0, 2*pi] to [-pi, pi]
+    for (size_t i = 0; i < joint_positions_.size(); i++)
+    {
+        if (joint_positions_[i] > M_PI)
+        {
+            joint_positions_[i] -= 2.0f * M_PI;
+        }
+    }
 
     return hardware_interface::return_type::OK;
 }
@@ -108,8 +117,11 @@ hardware_interface::return_type CurieArmController::write(
     commands_.arm.shoulder_position = hw_commands_[1] * RAD_TO_DEG;
     commands_.arm.elbow_position = hw_commands_[2] * RAD_TO_DEG;
     commands_.arm.wrist_pitch_position = hw_commands_[3] * RAD_TO_DEG;
-    // commands_.arm.wrist_roll_position = hw_commands_[4] * RAD_TO_DEG;
-    commands_.arm.wrist_roll_position = 0.0f;
+    commands_.arm.wrist_roll_position = hw_commands_[4] * RAD_TO_DEG;
+
+    // RCLCPP_INFO(rclcpp::get_logger("ArmSystem"), "ARM COMMANDS: Base: %.2f, Shoulder: %.2f, Elbow: %.2f, Wrist Pitch: %.2f, Wrist Roll: %.2f",
+    //     commands_.arm.base_position, commands_.arm.shoulder_position, commands_.arm.elbow_position,
+    //     commands_.arm.wrist_pitch_position, commands_.arm.wrist_roll_position);
 
     if (arm_hardware_.write(static_cast<void*>(&commands_)) < 0)
     {

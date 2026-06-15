@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="arm">
     <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
-    <xacro:arg name="use_vcan" default="true" />
-
+    <xacro:arg name="use_vcan" default="false" />
+    <xacro:arg name="use_mock_hardware" default="true" />
     <!-- Import arm urdf file -->
     <xacro:include filename="$(find curie_robot_description)/arm/urdf/arm.urdf" />
 
@@ -10,6 +10,6 @@
     <xacro:include filename="arm.ros2_control.xacro" />
 
 
-    <xacro:arm_ros2_control name="ArmSystem" initial_positions_file="$(arg initial_positions_file)" use_vcan="$(arg use_vcan)"/>
+    <xacro:arm_ros2_control name="ArmSystem" initial_positions_file="$(arg initial_positions_file)" use_vcan="$(arg use_vcan)" use_mock_hardware="$(arg use_mock_hardware)"/>
 
 </robot>

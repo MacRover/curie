@@ -18,7 +18,22 @@ def generate_launch_description():
             ComposableNode(
                 package="joy",
                 plugin="joy::Joy",
-                name="joy_node",
+                name="joy_drive_node",
+                parameters=[{
+                    "device_id": 0,
+                }],
+            ),
+            ComposableNode(
+                package="joy",
+                plugin="joy::Joy",
+                name="joy_arm_node",
+                parameters=[{
+                    "device_id": 1,
+                    "autorepeat_rate": 0.0, # Only publish on joystick input, we don't want to accidentally interrupt the arm if its executing a trajectory
+                }],
+                remappings=[
+                    ("/joy", "/joy1")
+                ]
             ),
             ComposableNode(
                 package="curie_base",
