@@ -27,7 +27,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "use_mock_hardware",
-            default_value="false",
+            default_value="true",
             description="Use mock hardware for simulation and testing.",
         )
     )
@@ -90,6 +90,7 @@ def generate_launch_description():
         output="both",
         remappings=[
             ("~/robot_description", "/robot_description"),
+            ("/arm_velocity_controller/commands", "/arm_controller/vel_commands"),
         ],
     )
 
@@ -107,6 +108,19 @@ def generate_launch_description():
                     package="controller_manager",
                     executable="spawner",
                     arguments=["arm_controller", "--controller-manager", "/controller_manager"],
+                )
+            ]
+        )
+    )
+
+    delay_vel_controller_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[
+                Node(
+                    package="controller_manager",
+                    executable="spawner",
+                    arguments=["arm_velocity_controller", "--controller-manager", "/controller_manager"],
                 )
             ]
         )
@@ -137,6 +151,7 @@ def generate_launch_description():
         control_node,
         joint_state_broadcaster_spawner,
         delay_arm_controller_spawner,
+        delay_vel_controller_spawner,
         # delay_gripper_controller_spawner,
         delay_rviz_node,
     ]

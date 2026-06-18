@@ -29,7 +29,6 @@ def generate_launch_description():
                 name="joy_arm_node",
                 parameters=[{
                     "device_id": 1,
-                    "autorepeat_rate": 0.0, # Only publish on joystick input, we don't want to accidentally interrupt the arm if its executing a trajectory
                 }],
                 remappings=[
                     ("/joy", "/joy1")

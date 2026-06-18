@@ -17,6 +17,7 @@
             </xacro:unless>
             <joint name="base_rotation">
                 <command_interface name="position"/>
+                <command_interface name="velocity"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['base_rotation']}</param>
                 </state_interface>
@@ -24,6 +25,7 @@
             </joint>
             <joint name="shoulder_joint">
                 <command_interface name="position"/>
+                <command_interface name="velocity"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['shoulder_joint']}</param>
                 </state_interface>
@@ -31,6 +33,7 @@
             </joint>
             <joint name="elbow_joint">
                 <command_interface name="position"/>
+                <command_interface name="velocity"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['elbow_joint']}</param>
                 </state_interface>
@@ -38,6 +41,7 @@
             </joint>
             <joint name="wrist_pitch">
                 <command_interface name="position"/>
+                <command_interface name="velocity"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['wrist_pitch']}</param>
                 </state_interface>
@@ -45,6 +49,7 @@
             </joint>
             <joint name="wrist_roll">
                 <command_interface name="position"/>
+                <command_interface name="velocity"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['wrist_roll']}</param>
                 </state_interface>

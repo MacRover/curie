@@ -4,7 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "trajectory_msgs/msg/joint_trajectory.hpp"
+#include "std_msgs/msg/float64_multi_array.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 
 namespace base
@@ -21,18 +21,19 @@ namespace base
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_drive_sub_;
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr arm_drive_sub_;
         rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr drive_pub_;
-        rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr arm_pub_;
         rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr enable_client_;
         rclcpp::TimerBase::SharedPtr state_timer_;
 
         geometry_msgs::msg::TwistStamped cmd_vel_msg_;
-        trajectory_msgs::msg::JointTrajectory traj_msg_;
+        std_msgs::msg::Float64MultiArray arm_cmd_msg_;
         std_srvs::srv::SetBool::Request::SharedPtr enable_req_;
         rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture future;
         uint32_t request_id;
         double max_linear_speed;
         double max_angular_speed;
         double turbo_multiplier;
+        std::vector<double> arm_max_speeds;
         bool request_handled, button_pressed;
     };
 } // namespace basestation

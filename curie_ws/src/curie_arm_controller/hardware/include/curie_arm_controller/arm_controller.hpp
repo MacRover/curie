@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <thread>
+#include <string.h>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -12,6 +13,7 @@
 #include "rclcpp_lifecycle/state.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "curie_hw_control/spark_arm_hardware.hpp"
+#include "curie_hw_control/spark_arm_velocity_hardware.hpp"
 
 namespace curie_arm_controller
 {
@@ -44,9 +46,11 @@ namespace curie_arm_controller
     private:
         std::thread arm_hw_thread_;
         hardware::SparkArmInterface arm_hardware_;
+        hardware::SparkArmVelocityInterface arm_vel_hardware_;
         std::vector<double> joint_velocities_;
         std::vector<double> joint_positions_;
-        std::vector<double> hw_commands_;
+        std::vector<double> hw_pos_commands_;
+        std::vector<double> hw_vel_commands_;
 
         SparkCommand commands_;
         SparkStatus status_;

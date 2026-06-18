@@ -33,12 +33,24 @@ typedef enum : uint8_t
 
 base::Basestation::Basestation(const rclcpp::NodeOptions & options) : Node("basestation", options), request_handled(true), button_pressed(false)
 {
-    this->declare_parameter("max_linear_speed", 1.0);
-    this->declare_parameter("max_angular_speed", 1.0);
-    this->declare_parameter("turbo_multiplier", 1.0);
-    max_linear_speed = this->get_parameter("max_linear_speed").as_double();
-    max_angular_speed = this->get_parameter("max_angular_speed").as_double();
-    turbo_multiplier = this->get_parameter("turbo_multiplier").as_double();
+    this->declare_parameter("drive.max_linear_speed", 1.0);
+    this->declare_parameter("drive.max_angular_speed", 1.0);
+    this->declare_parameter("drive.turbo_multiplier", 1.0);
+
+    this->declare_parameter("arm.max_base_angular_speed", 1.0);
+    this->declare_parameter("arm.max_shoulder_angular_speed", 1.0);
+    this->declare_parameter("arm.max_elbow_angular_speed", 1.0);
+    this->declare_parameter("arm.max_pitch_angular_speed", 1.0);
+    this->declare_parameter("arm.max_roll_angular_speed", 1.0);
+
+    max_linear_speed = this->get_parameter("drive.max_linear_speed").as_double();
+    max_angular_speed = this->get_parameter("drive.max_angular_speed").as_double();
+    turbo_multiplier = this->get_parameter("drive.turbo_multiplier").as_double();
+    arm_max_speeds.push_back(this->get_parameter("arm.max_base_angular_speed").as_double());
+    arm_max_speeds.push_back(this->get_parameter("arm.max_shoulder_angular_speed").as_double());
+    arm_max_speeds.push_back(this->get_parameter("arm.max_elbow_angular_speed").as_double());
+    arm_max_speeds.push_back(this->get_parameter("arm.max_pitch_angular_speed").as_double());
+    arm_max_speeds.push_back(this->get_parameter("arm.max_roll_angular_speed").as_double());
 
     enable_req_ = std::make_shared<std_srvs::srv::SetBool::Request>();
     enable_client_ = this->create_client<std_srvs::srv::SetBool>("heartbeat/enable");
@@ -53,9 +65,7 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) : Node("base
 
     arm_drive_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "joy1", 10, std::bind(&Basestation::_joy_arm_callback, this, std::placeholders::_1));
-    arm_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>("arm_controller/joint_trajectory", 10);
-    traj_msg_.joint_names = {"base_rotation", "shoulder_joint", "elbow_joint", "wrist_pitch", "wrist_roll"};
-    traj_msg_.points.resize(1);
+    arm_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/arm_controller/vel_commands", 10);
 
     RCLCPP_INFO(this->get_logger(), "Basestation OK");
 }
@@ -67,18 +77,16 @@ double base::Basestation::_map(double value, double istart, double iend, double 
 
 void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-    traj_msg_.header.stamp = this->now();
     double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
-    
-    traj_msg_.points[0].positions = {
-        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -90.0, 90.0) * DEG_TO_RAD,
-        this->_map(msg->axes[RIGHT_Y] * -1.0, -1.0, 1.0, -85.0, 85.0) * DEG_TO_RAD,
-        this->_map(msg->axes[LEFT_Y] * -1.0, -1.0, 1.0, -40.0, 85.0) * DEG_TO_RAD,
-        this->_map(pitch_axis, -1.0, 1.0, -85.0, 85.0) * DEG_TO_RAD,
-        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -85.0, 85.0) * DEG_TO_RAD,
+    arm_cmd_msg_.data = {
+        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]),
+        this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]),
+        this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),
+        this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),
+        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),
     };
-    traj_msg_.points[0].time_from_start = rclcpp::Duration(std::chrono::milliseconds(10));
-    arm_pub_->publish(traj_msg_);
+
+    arm_pub_->publish(arm_cmd_msg_);
 
     _handle_robot_state(msg->buttons[A], msg->buttons[B]);
 }

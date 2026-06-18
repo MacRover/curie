@@ -6,6 +6,9 @@ controller_manager:
     arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
+    arm_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
 
     hand_controller:
       type: position_controllers/GripperActionController
@@ -27,6 +30,16 @@ arm_controller:
     state_interfaces:
       - position
       - velocity
+
+arm_velocity_controller:
+  ros__parameters:
+    joints:
+      - base_rotation
+      - shoulder_joint
+      - elbow_joint
+      - wrist_pitch
+      - wrist_roll
+
 hand_controller:
   ros__parameters:
     joint: gripper_joint
