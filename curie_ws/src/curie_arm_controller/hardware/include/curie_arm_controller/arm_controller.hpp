@@ -51,9 +51,12 @@ namespace curie_arm_controller
         std::vector<double> joint_positions_;
         std::vector<double> hw_pos_commands_;
         std::vector<double> hw_vel_commands_;
+        std::vector<double> hw_pos_commands_prev_;
 
         SparkCommand commands_;
         SparkStatus status_;
+
+        bool arm_vel_state_;
     };
 }
 

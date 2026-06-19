@@ -79,11 +79,11 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
 {
     double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
     arm_cmd_msg_.data = {
-        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]),
-        this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]),
-        this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),
-        this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),
-        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),
+        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]), // base joint
+        this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]), // shoulder joint
+        this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),  // elbow joint
+        this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),         // pitch joint
+        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),  // roll joint
     };
 
     arm_pub_->publish(arm_cmd_msg_);

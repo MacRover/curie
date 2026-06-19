@@ -32,7 +32,9 @@ hardware_interface::CallbackReturn CurieArmController::on_init(
     joint_positions_.resize(info_.joints.size(), 0.0);
     hw_pos_commands_.resize(info_.joints.size(), 0.0);
     hw_vel_commands_.resize(info_.joints.size(), 0.0);
+    hw_pos_commands_prev_.resize(info_.joints.size(), 0.0);
     memset(&status_, 0, sizeof(status_));
+    arm_vel_state_ = false;
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -132,16 +134,18 @@ hardware_interface::return_type CurieArmController::write(
     commands_.arm.wrist_pitch_velocity = hw_vel_commands_[3] * RADPS_TO_DEGPM;
     commands_.arm.wrist_roll_velocity = hw_vel_commands_[4] * RADPS_TO_DEGPM;
 
-    // Override position commands under teleop mode
+    // Override position commands when in teleop/velocity mode
     for (size_t i = 0; i < hw_vel_commands_.size(); i++)
     {
+        if (arm_vel_state_ && std::abs(hw_pos_commands_[i] - hw_pos_commands_prev_[i]) > 1e-5)
+        {
+            arm_vel_state_ = false;
+        }
         if (std::abs(hw_vel_commands_[i]) > 0.01)
         {
-            if (arm_vel_hardware_.write(static_cast<void*>(&commands_)) < 0)
-            {
-                return hardware_interface::return_type::ERROR;
-            }
-            return hardware_interface::return_type::OK;
+            arm_vel_state_ = true;
+            hw_pos_commands_prev_ = hw_pos_commands_;
+            break;
         }
     }
 
@@ -149,11 +153,17 @@ hardware_interface::return_type CurieArmController::write(
     //     commands_.arm.base_position, commands_.arm.shoulder_position, commands_.arm.elbow_position,
     //     commands_.arm.wrist_pitch_position, commands_.arm.wrist_roll_position);
 
-    if (arm_hardware_.write(static_cast<void*>(&commands_)) < 0)
+    if (arm_vel_state_)
+    {
+        if (arm_vel_hardware_.write(static_cast<void*>(&commands_)) < 0)
+        {
+            return hardware_interface::return_type::ERROR;
+        }
+    }
+    else if (arm_hardware_.write(static_cast<void*>(&commands_)) < 0)
     {
         return hardware_interface::return_type::ERROR;
     }
-
     return hardware_interface::return_type::OK;
 }
 
