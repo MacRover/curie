@@ -58,14 +58,23 @@ void parse_data(char* data_str) {
       
       if (token != NULL) {
         char* ec_str = token; // Keep as text string
+
+        float raw_vwc = atof(vwc_str);
+        float temp_c = atof(temp_str);
+        float ec_val = atof(ec_str);
+
+        float vwc_m3_m3 = (0.0003879 * raw_vwc) - 0.6956; // Convert raw VWC to m3/m3
+        float vwc_percent = vwc_m3_m3 * 100.0; // Convert to percentage
+
+        float ec_us_cm = ec_val * 1000.0; // Convert EC to µS/cm
         
         // Print the strings directly
         DEBUG_SERIAL.print("VWC Counts: "); 
-        DEBUG_SERIAL.print(vwc_str);
+        DEBUG_SERIAL.print(vwc_m3_m3);
         DEBUG_SERIAL.print(" \tTemperature: "); 
-        DEBUG_SERIAL.print(temp_str);
+        DEBUG_SERIAL.print(temp_c);
         DEBUG_SERIAL.print(" \tElectrical Conductivity: "); 
-        DEBUG_SERIAL.println(ec_str);
+        DEBUG_SERIAL.println(ec_us_cm);
         return; 
       }
     }
