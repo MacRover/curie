@@ -315,7 +315,7 @@ try:
         
 
         """
-        # print("Temperature: " + str(temp_val) + " | Humidity: " + str(hum_val) + " | pH: " + str(ec_val) + " | Electrical Conductivity: " + str(ph_val))
+        # print("Temperature: " + str(temp_val) + " | Humidity: " + str(hum_val) + " | pH: " + str(ph_val) + " | Electrical Conductivity: " + str(ec_val))
 
 
         # Append it all to the lists
