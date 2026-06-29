@@ -137,7 +137,7 @@ def generate_launch_description():
         control_node,
         joint_state_broadcaster_spawner,
         delay_arm_controller_spawner,
-        # delay_gripper_controller_spawner,
+        delay_gripper_controller_spawner,
         delay_rviz_node,
     ]
     return LaunchDescription(declared_arguments + nodes)
