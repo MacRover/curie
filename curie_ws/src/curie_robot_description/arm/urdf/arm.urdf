@@ -92,7 +92,8 @@
   </link>
   <joint
     name="Base_joint"
-    type="continuous">
+    type="revolute">
+    <limit lower="-3.14" upper="3.14" effort="10" velocity="5.0"/>
     <origin
       xyz="0.0314355367866296 -0.167112129632076 0.0215333450507679"
       rpy="1.5707963267949 0 0.0124137542544794" />
@@ -145,7 +146,8 @@
   </link>
   <joint
     name="Bicep_Joint"
-    type="continuous">
+    type="revolute">
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="5.0"/> 
     <origin
       xyz="0 0.254 0"
       rpy="0.00812251575960651 0.000375080547518232 -0.0922896907892129" />
@@ -198,7 +200,8 @@
   </link>
   <joint
     name="Forearm_Joint"
-    type="continuous">
+    type="revolute">
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="5.0"/> 
     <origin
       xyz="0.205747654962669 0.439277543744026 0.0430310161664866"
       rpy="-0.0832050094036542 0.0319809506650058 1.23725552365871" />
@@ -304,7 +307,8 @@
   </link>
   <joint
     name="Wrist_pitch_joint"
-    type="continuous">
+    type="revolute">
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="5.0"/>
     <origin
       xyz="-0.0404563209238247 -0.0124767317892557 0.0124767317892556"
       rpy="-2.03938401887035 0.785398163397445 -1.57079632679489" />
