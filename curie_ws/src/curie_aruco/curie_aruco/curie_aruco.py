@@ -74,7 +74,7 @@ class MarkerDetectionSystem(Node):
         self.detector = aruco.ArucoDetector(aruco_dictionary, aruco_params)
 
         # open camera — use index 0 with default backend (V4L2 on Linux)
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
         time.sleep(1.0)
         for _ in range(10):
             self.cap.read()
