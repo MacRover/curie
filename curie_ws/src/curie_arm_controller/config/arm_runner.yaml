@@ -1,0 +1,79 @@
+mock_runners:
+  - name: arm_runner
+    can_interface: vcan0
+    can_bitrate: 1000000
+    filters:
+      - can_id: 0x02050000
+        can_mask: 0x0FFFFC00
+      - can_id: 0x0205C000
+        can_mask: 0x0FFFC000
+      - can_id: 0x02053800
+        can_mask: 0x0FFFFFC0
+      - can_id: 0x01011840
+        can_mask: 0x0FFFFFFF
+    can_nodes:
+      - name: arm_base
+        device_id: 18
+        max_velocity: 5.0
+        max_acceleration: 15.0
+        status_rates: [10, 1, 20, 0, 0, 20, 0, 0]
+        listen_for_heartbeat: true
+        flash:
+          position_factor: 1.0
+          velocity_factor: 1.0
+          abs_position_factor: 360.0
+          abs_velocity_factor: 360.0
+          control_type: 3
+          sensor_type: 4
+      - name: arm_shoulder
+        device_id: 16
+        max_velocity: 5.0
+        max_acceleration: 15.0
+        status_rates: [10, 1, 20, 0, 0, 20, 0, 0]
+        listen_for_heartbeat: true
+        flash:
+          position_factor: 1.0
+          velocity_factor: 1.0
+          abs_position_factor: 360.0
+          abs_velocity_factor: 360.0
+          control_type: 3
+          sensor_type: 4
+      - name: arm_elbow
+        device_id: 17
+        max_velocity: 5.0
+        max_acceleration: 15.0
+        status_rates: [10, 1, 20, 0, 0, 20, 0, 0]
+        listen_for_heartbeat: true
+        flash:
+          position_factor: 1.0
+          velocity_factor: 1.0
+          abs_position_factor: 360.0
+          abs_velocity_factor: 360.0
+          control_type: 3
+          sensor_type: 4
+      - name: arm_wrist_roll
+        device_id: 20
+        max_velocity: 5.0
+        max_acceleration: 15.0
+        status_rates: [10, 1, 20, 0, 0, 20, 0, 0]
+        listen_for_heartbeat: true
+        flash:
+          position_factor: 1.0
+          velocity_factor: 1.0
+          abs_position_factor: 360.0
+          abs_velocity_factor: 360.0
+          control_type: 3
+          sensor_type: 4
+      - name: arm_wrist_pitch
+        device_id: 19
+        max_velocity: 5.0
+        max_acceleration: 15.0
+        status_rates: [10, 1, 20, 0, 0, 20, 0, 0]
+        listen_for_heartbeat: true
+        flash:
+          position_factor: 1.0
+          velocity_factor: 1.0
+          abs_position_factor: 360.0
+          abs_velocity_factor: 360.0
+          control_type: 3
+          sensor_type: 4

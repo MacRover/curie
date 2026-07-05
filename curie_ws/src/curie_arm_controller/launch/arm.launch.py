@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, ExecuteProcess
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
@@ -19,13 +19,6 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            "use_vcan",
-            default_value="false",
-            description="Use vcan interface for virtual hardware communication.",
-        )
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
             "use_mock_hardware",
             default_value="true",
             description="Use mock hardware for simulation and testing.",
@@ -34,7 +27,6 @@ def generate_launch_description():
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
-    use_vcan = LaunchConfiguration("use_vcan")
     use_mock_hardware = LaunchConfiguration("use_mock_hardware")
 
     # Get URDF via xacro
@@ -47,9 +39,6 @@ def generate_launch_description():
             ),
             " ",
             "use_vcan:=",
-            use_vcan,
-            " ",
-            "use_mock_hardware:=",
             use_mock_hardware,
         ],
         on_stderr="ignore"
@@ -92,6 +81,27 @@ def generate_launch_description():
             ("~/robot_description", "/robot_description"),
             ("/arm_velocity_controller/commands", "/arm_controller/vel_commands"),
         ],
+    )
+
+    heartbeat_node = Node(
+        package="curie_hw_control",
+        executable="sparkmax_heartbeat",
+        output="both",
+        parameters=[{
+            "use_vcan": use_mock_hardware
+        }]
+    )
+
+    spark_mock_handler = ExecuteProcess(
+        cmd=[
+            "spark_mock_runner.py", 
+            PathJoinSubstitution(
+                [FindPackageShare("curie_arm_controller"), "config", "arm_runner.yaml"]
+            )
+        ],
+        name="spark_mock_runner",
+        output="screen",
+        condition=IfCondition(use_mock_hardware)
     )
 
     joint_state_broadcaster_spawner = Node(
@@ -149,6 +159,8 @@ def generate_launch_description():
     nodes = [
         robot_state_publisher_node,
         control_node,
+        heartbeat_node,
+        spark_mock_handler,
         joint_state_broadcaster_spawner,
         delay_arm_controller_spawner,
         delay_vel_controller_spawner,

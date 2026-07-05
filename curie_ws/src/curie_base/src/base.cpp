@@ -31,7 +31,13 @@ typedef enum : uint8_t
     RIGHT_TRIGGER = 5
 } Axis;
 
-base::Basestation::Basestation(const rclcpp::NodeOptions & options) : Node("basestation", options), request_handled(true), button_pressed(false)
+base::Basestation::Basestation(const rclcpp::NodeOptions & options) : 
+    Node("basestation", options), 
+    servo_request_handled(true),
+    request_handled(true), 
+    servo_button_pressed(false),
+    button_pressed(false),
+    arm_mode(JOINT_VELOCITY)
 {
     this->declare_parameter("drive.max_linear_speed", 1.0);
     this->declare_parameter("drive.max_angular_speed", 1.0);
@@ -42,6 +48,9 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) : Node("base
     this->declare_parameter("arm.max_elbow_angular_speed", 1.0);
     this->declare_parameter("arm.max_pitch_angular_speed", 1.0);
     this->declare_parameter("arm.max_roll_angular_speed", 1.0);
+
+    this->declare_parameter("arm.servoing", false);
+    servoing = this->get_parameter("arm.servoing").as_bool();
 
     max_linear_speed = this->get_parameter("drive.max_linear_speed").as_double();
     max_angular_speed = this->get_parameter("drive.max_angular_speed").as_double();
@@ -59,13 +68,22 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) : Node("base
         RCLCPP_INFO(this->get_logger(), "Heartbeat service not available, waiting...");
     }
 
+    servo_enable_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_node/unpause_servo");
+    servo_disable_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_node/pause_servo");
+    while (rclcpp::ok() && !(servo_enable_client_->wait_for_service(std::chrono::seconds(5)) && 
+                             servo_disable_client_->wait_for_service(std::chrono::seconds(5))))
+    {
+        RCLCPP_INFO(this->get_logger(), "Servo not available, waiting...");
+    }
+
     joy_drive_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "joy", 10, std::bind(&Basestation::_joy_drive_callback, this, std::placeholders::_1));
     drive_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel", 10);
 
     arm_drive_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
         "joy1", 10, std::bind(&Basestation::_joy_arm_callback, this, std::placeholders::_1));
-    arm_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/arm_controller/vel_commands", 10);
+    arm_joint_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/arm_controller/vel_commands", 10);
+    arm_servo_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_node/delta_twist_cmds", 10);
 
     RCLCPP_INFO(this->get_logger(), "Basestation OK");
 }
@@ -77,18 +95,48 @@ double base::Basestation::_map(double value, double istart, double iend, double 
 
 void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-    double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
-    arm_cmd_msg_.data = {
-        this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]), // base joint
-        this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]), // shoulder joint
-        this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),  // elbow joint
-        this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),         // pitch joint
-        this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),  // roll joint
-    };
+    bool button_ik = msg->buttons[X];
+    bool button_fk = msg->buttons[Y];
+    if (servoing && button_ik)
+    {
+        arm_mode = SERVO;
+    }
+    else if (button_fk)
+    {
+        arm_mode = JOINT_VELOCITY;
+    }
 
-    arm_pub_->publish(arm_cmd_msg_);
+    switch (arm_mode)
+    {
+        case SERVO:
+        {
+            servo_cmd_msg_.header.stamp = this->now();
+            servo_cmd_msg_.header.frame_id = "base_link";
+            servo_cmd_msg_.twist.linear.x = msg->axes[RIGHT_Y];
+            servo_cmd_msg_.twist.linear.z = msg->axes[RIGHT_X];
+            servo_cmd_msg_.twist.angular.x = msg->axes[LEFT_X];
+            servo_cmd_msg_.twist.angular.y = msg->axes[LEFT_Y];
+
+            arm_servo_pub_->publish(servo_cmd_msg_);
+            break;
+        }
+        case JOINT_VELOCITY:
+        {
+            double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
+            arm_cmd_msg_.data = {
+                this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]), // base joint
+                this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]), // shoulder joint
+                this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),  // elbow joint
+                this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),         // pitch joint
+                this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),  // roll joint
+            };
+            arm_joint_pub_->publish(arm_cmd_msg_);
+            break;
+        }
+    }
 
     _handle_robot_state(msg->buttons[A], msg->buttons[B]);
+    _handle_servo_state(button_ik, button_fk);
 }
 
 void base::Basestation::_joy_drive_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
@@ -101,6 +149,49 @@ void base::Basestation::_joy_drive_callback(const sensor_msgs::msg::Joy::SharedP
     drive_pub_->publish(cmd_vel_msg_);
 
     _handle_robot_state(msg->buttons[A], msg->buttons[B]);
+}
+
+void base::Basestation::_handle_servo_state(bool enable, bool disable)
+{
+    if (!servo_request_handled)
+    {
+        return;
+    }
+    if (!servo_button_pressed && (enable || disable))
+    {
+        servo_button_pressed = true;
+        servo_request_handled = false;
+        auto client = enable ? servo_enable_client_ : servo_disable_client_;
+        auto result = client->async_send_request(
+            std::make_shared<std_srvs::srv::Trigger::Request>(),
+            [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result) {
+                servo_request_handled = true;
+                if (result.get()->success) {
+                    RCLCPP_INFO(this->get_logger(), "Servo enabled");
+                } else {
+                    RCLCPP_WARN(this->get_logger(), "Failed to enable servo: %s", result.get()->message.c_str());
+                }
+            });
+        
+        servo_future = result.future;
+        servo_request_id = result.request_id;
+        servo_timer_ = this->create_wall_timer(
+            std::chrono::seconds(1),
+            [this]() {
+                if (servo_future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+                    RCLCPP_WARN(this->get_logger(), "Request timed out, is the rover connected?");
+                    // Clear pending request and allow new requests to be sent
+                    servo_enable_client_->remove_pending_request(servo_request_id);
+                    servo_request_handled = true;
+                }
+                servo_timer_->cancel();
+            }
+        );
+    }
+    else if (!(enable || disable))
+    {
+        servo_button_pressed = false;
+    }
 }
 
 void base::Basestation::_handle_robot_state(bool enable, bool disable)

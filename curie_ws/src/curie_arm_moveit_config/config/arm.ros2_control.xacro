@@ -1,20 +1,13 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:macro name="arm_ros2_control" params="name initial_positions_file use_vcan use_mock_hardware">
+    <xacro:macro name="arm_ros2_control" params="name initial_positions_file use_mock_hardware">
         <xacro:property name="initial_positions" value="${load_yaml(initial_positions_file)['initial_positions']}"/>
 
         <ros2_control name="${name}" type="system">
-            <xacro:if value="${use_mock_hardware}">
-                <hardware>
-                    <plugin>mock_components/GenericSystem</plugin>
-                </hardware>
-            </xacro:if>
-            <xacro:unless value="${use_mock_hardware}">
-                <hardware>
-                    <plugin>curie_arm_controller/CurieArmController</plugin>
-                    <param name="use_vcan">${use_vcan}</param>
-                </hardware>
-            </xacro:unless>
+            <hardware>
+                <plugin>curie_arm_controller/CurieArmController</plugin>
+                <param name="use_vcan">${use_mock_hardware}</param>
+            </hardware>
             <joint name="base_rotation">
                 <command_interface name="position"/>
                 <command_interface name="velocity"/>

@@ -20,7 +20,7 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            "use_vcan",
+            "use_mock_hardware",
             default_value="false",
             description="Use vcan interface for hardware communication.",
         )
@@ -28,7 +28,7 @@ def generate_launch_description():
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
-    use_vcan = LaunchConfiguration("use_vcan")
+    use_mock_hardware = LaunchConfiguration("use_mock_hardware")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -40,7 +40,7 @@ def generate_launch_description():
             ),
             " ",
             "use_vcan:=",
-            use_vcan,
+            use_mock_hardware,
         ]
     )
     robot_description = {"robot_description": robot_description_content}
@@ -99,7 +99,7 @@ def generate_launch_description():
         executable="sparkmax_heartbeat",
         name="heartbeat_node",
         parameters=[{
-            "use_vcan": use_vcan
+            "use_vcan": use_mock_hardware
         }],
     )
 
