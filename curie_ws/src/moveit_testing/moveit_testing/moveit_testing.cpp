@@ -4,15 +4,11 @@ PoseSubscriberMover::PoseSubscriberMover() : Node(
     "moveit_testing",
     rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true))
 {
-    key_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-        "/key_target_pose", 1,
-        std::bind(&PoseSubscriberMover::key_pose_callback, this, _1));
-
     string_sub_ = this->create_subscription<std_msgs::msg::String>(
         "/target_string", 10,
         std::bind(&PoseSubscriberMover::string_callback, this, _1));
 
-    target_key_pub_ = this->create_publisher<std_msgs::msg::String>("/target_key", 10);
+    key_pose_client_ = this->create_client<keyboard_interfaces::srv::KeyPose>("key_pose");
 }
 
 void PoseSubscriberMover::init_moveit()
@@ -31,52 +27,56 @@ void PoseSubscriberMover::init_moveit()
         home_pose_.pose.position.y,
         home_pose_.pose.position.z);
 }
+
+geometry_msgs::msg::PoseStamped PoseSubscriberMover::get_key_pose(const std::string & key)
+{
+    if (!key_pose_client_->wait_for_service(std::chrono::seconds(2))) {
+        RCLCPP_ERROR(this->get_logger(), "KeyPose service not available");
+        return geometry_msgs::msg::PoseStamped();
+    }
+
+    auto request = std::make_shared<keyboard_interfaces::srv::KeyPose::Request>();
+    request->key = key;
+
+    auto future = key_pose_client_->async_send_request(request);
+    future.wait();
+
+    auto response = future.get();
+    if (!response->success) {
+        RCLCPP_WARN(this->get_logger(), "Invalid key requested: '%s'", key.c_str());
+        return geometry_msgs::msg::PoseStamped();
+    }
+    return response->pose;
+}
+
 void PoseSubscriberMover::string_callback(const std_msgs::msg::String::SharedPtr msg)
 {
     if (!move_group_) return;
-    if (is_typing_) {
+    if (is_typing_.exchange(true)) {
         RCLCPP_WARN(this->get_logger(), "Already typing, ignoring new string");
         return;
     }
 
     std::string text = msg->data;
-    is_typing_ = true;
 
     typing_thread_ = std::thread([this, text]() {
-
         for (char c : text) {
             std::string key(1, c);
+            RCLCPP_INFO(this->get_logger(), "Requesting key: %s", key.c_str());
 
-            // Reset flag before publishing
-            {
-                std::lock_guard<std::mutex> lock(pose_mutex_);
-                pose_ready_ = false;
+            auto pose = get_key_pose(key);
+            if (pose.header.frame_id.empty()) {
+                RCLCPP_WARN(this->get_logger(), "Skipping key '%s'", key.c_str());
+                continue;
             }
 
-            // Publish key
-            auto key_msg = std_msgs::msg::String();
-            key_msg.data = key;
-            target_key_pub_->publish(key_msg);
-
-            // Wait for ArUco to respond
-            std::unique_lock<std::mutex> lock(pose_mutex_);
-            pose_cv_.wait(lock, [this] { return pose_ready_; });
-
-            plan_and_execute(latest_key_pose_);
-            go_home();
+            if (plan_and_execute(pose)) {
+                go_home();
+            }
         }
-
-        is_typing_ = false;
+        is_typing_.store(false);
     });
     typing_thread_.detach();
-}
-
-void PoseSubscriberMover::key_pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
-{
-    std::lock_guard<std::mutex> lock(pose_mutex_); 
-    latest_key_pose_ = *msg; 
-    pose_ready_ = true; 
-    pose_cv_.notify_one(); 
 }
 
 bool PoseSubscriberMover::plan_and_execute(const geometry_msgs::msg::PoseStamped& pose_msg)
@@ -84,7 +84,6 @@ bool PoseSubscriberMover::plan_and_execute(const geometry_msgs::msg::PoseStamped
     geometry_msgs::msg::PoseStamped target_pose = home_pose_;
     target_pose.pose.position.x += pose_msg.pose.position.x;
     target_pose.pose.position.y += pose_msg.pose.position.y;
-    //target_pose.pose.position.z += pose_msg.pose.position.z;
 
     move_group_->setPositionTarget(
         target_pose.pose.position.x,

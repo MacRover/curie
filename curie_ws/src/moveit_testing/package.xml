@@ -6,13 +6,12 @@
   <description>MoveIt testing node</description>
   <maintainer email="will.scott9214@gmail.com">will</maintainer>
   <license>Apache-2.0</license>
-
   <buildtool_depend>ament_cmake</buildtool_depend>
-
   <depend>rclcpp</depend>
   <depend>moveit_ros_planning_interface</depend>
   <depend>std_msgs</depend>
-
+  <depend>geometry_msgs</depend>
+  <depend>keyboard_interfaces</depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>
