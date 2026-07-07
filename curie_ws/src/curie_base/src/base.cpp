@@ -70,8 +70,9 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) :
 
     servo_enable_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_node/unpause_servo");
     servo_disable_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_node/pause_servo");
-    while (rclcpp::ok() && !(servo_enable_client_->wait_for_service(std::chrono::seconds(5)) && 
-                             servo_disable_client_->wait_for_service(std::chrono::seconds(5))))
+    while (rclcpp::ok() && servoing && 
+            !(servo_enable_client_->wait_for_service(std::chrono::seconds(5)) && 
+              servo_disable_client_->wait_for_service(std::chrono::seconds(5))))
     {
         RCLCPP_INFO(this->get_logger(), "Servo not available, waiting...");
     }
@@ -113,9 +114,9 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
             servo_cmd_msg_.header.stamp = this->now();
             servo_cmd_msg_.header.frame_id = "base_link";
             servo_cmd_msg_.twist.linear.x = msg->axes[RIGHT_Y];
-            servo_cmd_msg_.twist.linear.z = msg->axes[RIGHT_X];
-            servo_cmd_msg_.twist.angular.x = msg->axes[LEFT_X];
-            servo_cmd_msg_.twist.angular.y = msg->axes[LEFT_Y];
+            servo_cmd_msg_.twist.linear.z = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
+            servo_cmd_msg_.twist.angular.x = msg->axes[LEFT_X] * -1.0;
+            servo_cmd_msg_.twist.angular.y = msg->axes[LEFT_Y] * -1.0;
 
             arm_servo_pub_->publish(servo_cmd_msg_);
             break;
@@ -124,11 +125,11 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
         {
             double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
             arm_cmd_msg_.data = {
-                this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]), // base joint
-                this->_map(msg->axes[RIGHT_Y], -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]), // shoulder joint
-                this->_map(msg->axes[LEFT_Y], -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),  // elbow joint
-                this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),         // pitch joint
-                this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),  // roll joint
+                this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]),        // base joint
+                this->_map(msg->axes[RIGHT_Y] * -1.0, -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]), // shoulder joint
+                this->_map(msg->axes[LEFT_Y] * -1.0, -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),  // elbow joint
+                this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),                // pitch joint
+                this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),         // roll joint
             };
             arm_joint_pub_->publish(arm_cmd_msg_);
             break;
@@ -162,14 +163,15 @@ void base::Basestation::_handle_servo_state(bool enable, bool disable)
         servo_button_pressed = true;
         servo_request_handled = false;
         auto client = enable ? servo_enable_client_ : servo_disable_client_;
+        RCLCPP_INFO(this->get_logger(), "Sending request to %s servo", enable ? "enable" : "disable");
         auto result = client->async_send_request(
             std::make_shared<std_srvs::srv::Trigger::Request>(),
             [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result) {
                 servo_request_handled = true;
                 if (result.get()->success) {
-                    RCLCPP_INFO(this->get_logger(), "Servo enabled");
+                    RCLCPP_INFO(this->get_logger(), "Servo toggled");
                 } else {
-                    RCLCPP_WARN(this->get_logger(), "Failed to enable servo: %s", result.get()->message.c_str());
+                    RCLCPP_WARN(this->get_logger(), "Failed to toggle servo: %s", result.get()->message.c_str());
                 }
             });
         
@@ -179,7 +181,9 @@ void base::Basestation::_handle_servo_state(bool enable, bool disable)
             std::chrono::seconds(1),
             [this]() {
                 if (servo_future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-                    RCLCPP_WARN(this->get_logger(), "Request timed out, is the rover connected?");
+                    RCLCPP_WARN(this->get_logger(), 
+                        "Request timed out, servo node may still be initializing or rover is not connected"
+                    );
                     // Clear pending request and allow new requests to be sent
                     servo_enable_client_->remove_pending_request(servo_request_id);
                     servo_request_handled = true;

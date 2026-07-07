@@ -7,6 +7,7 @@
             <hardware>
                 <plugin>curie_arm_controller/CurieArmController</plugin>
                 <param name="use_vcan">${use_mock_hardware}</param>
+                <!-- <plugin>mock_components/GenericSystem</plugin> -->
             </hardware>
             <joint name="base_rotation">
                 <command_interface name="position"/>
