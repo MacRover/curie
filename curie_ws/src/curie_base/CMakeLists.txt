@@ -13,6 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(controller_manager_msgs REQUIRED)
 
 add_library(base_main_component SHARED src/base.cpp)
 ament_target_dependencies(
@@ -23,6 +24,7 @@ ament_target_dependencies(
   trajectory_msgs
   sensor_msgs
   std_srvs
+  controller_manager_msgs
 )
 target_include_directories(base_main_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

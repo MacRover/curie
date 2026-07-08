@@ -8,6 +8,7 @@
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
+#include "controller_manager_msgs/srv/switch_controller.hpp"
 
 typedef enum
 {
@@ -34,12 +35,14 @@ namespace base
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr arm_joint_pub_;
         rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr enable_client_;
         rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_enable_client_, servo_disable_client_;
+        rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr controller_client_;
         rclcpp::TimerBase::SharedPtr state_timer_, servo_timer_;
 
         geometry_msgs::msg::TwistStamped cmd_vel_msg_;
         geometry_msgs::msg::TwistStamped servo_cmd_msg_;
         std_msgs::msg::Float64MultiArray arm_cmd_msg_;
         std_srvs::srv::SetBool::Request::SharedPtr enable_req_;
+        controller_manager_msgs::srv::SwitchController::Request::SharedPtr switch_req_;
         rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture future;
         rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture servo_future;
         uint32_t request_id, servo_request_id;

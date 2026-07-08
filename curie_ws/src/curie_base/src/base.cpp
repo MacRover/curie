@@ -68,6 +68,13 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) :
         RCLCPP_INFO(this->get_logger(), "Heartbeat service not available, waiting...");
     }
 
+    switch_req_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
+    controller_client_ = this->create_client<controller_manager_msgs::srv::SwitchController>("/controller_manager/switch_controller");
+    while (rclcpp::ok() && !controller_client_->wait_for_service(std::chrono::seconds(5))) 
+    {
+        RCLCPP_INFO(this->get_logger(), "Controller manager not available, waiting...");
+    }
+
     servo_enable_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_node/unpause_servo");
     servo_disable_client_ = this->create_client<std_srvs::srv::Trigger>("/servo_node/pause_servo");
     while (rclcpp::ok() && servoing && 
@@ -136,8 +143,11 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
         }
     }
 
+    if (servoing)
+    {
+        _handle_servo_state(button_ik, button_fk);   
+    }
     _handle_robot_state(msg->buttons[A], msg->buttons[B]);
-    _handle_servo_state(button_ik, button_fk);
 }
 
 void base::Basestation::_joy_drive_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
@@ -166,13 +176,21 @@ void base::Basestation::_handle_servo_state(bool enable, bool disable)
         RCLCPP_INFO(this->get_logger(), "Sending request to %s servo", enable ? "enable" : "disable");
         auto result = client->async_send_request(
             std::make_shared<std_srvs::srv::Trigger::Request>(),
-            [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result) {
+            [this, enable](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result) {
+                (void)result;
                 servo_request_handled = true;
-                if (result.get()->success) {
-                    RCLCPP_INFO(this->get_logger(), "Servo toggled");
+                switch_req_->start_asap = true;
+                switch_req_->strictness = controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT;
+                if (enable) {
+                    RCLCPP_INFO(this->get_logger(), "Servo enabled");
+                    switch_req_->activate_controllers = {"arm_position_controller"};
+                    switch_req_->deactivate_controllers = {"arm_controller"};
                 } else {
-                    RCLCPP_WARN(this->get_logger(), "Failed to toggle servo: %s", result.get()->message.c_str());
+                    RCLCPP_INFO(this->get_logger(), "Servo disabled");
+                    switch_req_->activate_controllers = {"arm_controller"};
+                    switch_req_->deactivate_controllers = {"arm_position_controller"};
                 }
+                controller_client_->async_send_request(switch_req_);
             });
         
         servo_future = result.future;
