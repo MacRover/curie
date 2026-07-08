@@ -31,6 +31,15 @@ typedef enum : uint8_t
     RIGHT_TRIGGER = 5
 } Axis;
 
+typedef enum : uint8_t
+{
+    PARAM_ARM_BASE = 0,
+    PARAM_ARM_SHOULDER,
+    PARAM_ARM_ELBOW,
+    PARAM_ARM_PITCH,
+    PARAM_ARM_ROLL,
+} ROSParamIndex;
+
 base::Basestation::Basestation(const rclcpp::NodeOptions & options) : 
     Node("basestation", options), 
     servo_request_handled(true),
@@ -132,11 +141,31 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
         {
             double pitch_axis = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
             arm_cmd_msg_.data = {
-                this->_map(msg->axes[RIGHT_X], -1.0, 1.0, -arm_max_speeds[0], arm_max_speeds[0]),        // base joint
-                this->_map(msg->axes[RIGHT_Y] * -1.0, -1.0, 1.0, -arm_max_speeds[1], arm_max_speeds[1]), // shoulder joint
-                this->_map(msg->axes[LEFT_Y] * -1.0, -1.0, 1.0, -arm_max_speeds[2], arm_max_speeds[2]),  // elbow joint
-                this->_map(pitch_axis, -1.0, 1.0, -arm_max_speeds[3], arm_max_speeds[3]),                // pitch joint
-                this->_map(msg->axes[LEFT_X], -1.0, 1.0, -arm_max_speeds[4], arm_max_speeds[4]),         // roll joint
+                this->_map(
+                    msg->axes[RIGHT_X], 
+                    -1.0, 1.0, 
+                    -arm_max_speeds[PARAM_ARM_BASE], arm_max_speeds[PARAM_ARM_BASE]
+                ),
+                this->_map(
+                    msg->axes[RIGHT_Y] * -1.0, 
+                    -1.0, 1.0, 
+                    -arm_max_speeds[PARAM_ARM_SHOULDER], arm_max_speeds[PARAM_ARM_SHOULDER]
+                ),
+                this->_map(
+                    msg->axes[LEFT_Y] * -1.0, 
+                    -1.0, 1.0, 
+                    -arm_max_speeds[PARAM_ARM_ELBOW], arm_max_speeds[PARAM_ARM_ELBOW]
+                ),
+                this->_map(
+                    pitch_axis, 
+                    -1.0, 1.0, 
+                    -arm_max_speeds[PARAM_ARM_PITCH], arm_max_speeds[PARAM_ARM_PITCH]
+                ),
+                this->_map(
+                    msg->axes[LEFT_X], 
+                    -1.0, 1.0, 
+                    -arm_max_speeds[PARAM_ARM_ROLL], arm_max_speeds[PARAM_ARM_ROLL]
+                ),
             };
             arm_joint_pub_->publish(arm_cmd_msg_);
             break;
@@ -190,6 +219,15 @@ void base::Basestation::_handle_servo_state(bool enable, bool disable)
                     switch_req_->activate_controllers = {"arm_controller"};
                     switch_req_->deactivate_controllers = {"arm_position_controller"};
                 }
+                // Whenever switching from JTC to position controller specifically, we need to prime the servo node
+                // so it does not send stale commands which causes the arm to jump back to the position right before
+                // it was paused. To do so, send a single small twist command to the servo node, essentially "pinging" it to
+                // update its internal state.
+                geometry_msgs::msg::TwistStamped update_msg;
+                update_msg.header.stamp = this->now();
+                update_msg.header.frame_id = "base_link";
+                update_msg.twist.linear.x = -0.0001;
+                arm_servo_pub_->publish(update_msg);
                 controller_client_->async_send_request(switch_req_);
             });
         
