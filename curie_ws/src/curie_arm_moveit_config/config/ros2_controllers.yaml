@@ -54,7 +54,7 @@ arm_velocity_controller:
 
 hand_controller:
   ros__parameters:
-    joint: gripper_joint
+    joint: gripper
     allow_stalling: false
     stall_velocity_threshold: 0.001
     stall_timeout: 1.0
