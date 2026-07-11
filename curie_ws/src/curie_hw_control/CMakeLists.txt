@@ -48,6 +48,12 @@ target_include_directories(sparkmax_heartbeat PUBLIC
 target_link_libraries(test_sparkmax hw_lib)
 target_link_libraries(sparkmax_heartbeat hw_lib)
 
+add_custom_target(
+  spark_mmrt_bins
+  ALL COMMAND make
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/spark_mmrt
+)
+
 install(TARGETS test_sparkmax sparkmax_heartbeat
   DESTINATION lib/${PROJECT_NAME})
 

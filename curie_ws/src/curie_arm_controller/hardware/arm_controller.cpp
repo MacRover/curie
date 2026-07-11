@@ -23,11 +23,18 @@ hardware_interface::CallbackReturn CurieArmController::on_init(
     {
         return hardware_interface::CallbackReturn::ERROR;
     }
+    if (arm_vel_hardware_.initialize(&use_vcan_interface) < 0)
+    {
+        return hardware_interface::CallbackReturn::ERROR;
+    }
     arm_hw_thread_ = std::thread(&hardware::SparkArmInterface::run, &arm_hardware_);
     joint_velocities_.resize(info_.joints.size(), 0.0);
     joint_positions_.resize(info_.joints.size(), 0.0);
-    hw_commands_.resize(info_.joints.size(), 0.0);
+    hw_pos_commands_.resize(info_.joints.size(), 0.0);
+    hw_vel_commands_.resize(info_.joints.size(), 0.0);
+    hw_pos_commands_prev_.resize(info_.joints.size(), 0.0);
     memset(&status_, 0, sizeof(status_));
+    arm_vel_state_ = false;
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -52,7 +59,9 @@ std::vector<hardware_interface::CommandInterface> CurieArmController::export_com
   for (auto i = 0u; i < info_.joints.size(); i++)
   {
     command_interfaces.emplace_back(
-        info_.joints[i].name, "position", &hw_commands_[i]);
+        info_.joints[i].name, "position", &hw_pos_commands_[i]);
+    command_interfaces.emplace_back(
+        info_.joints[i].name, "velocity", &hw_vel_commands_[i]);
   }
 
   return command_interfaces;
@@ -115,28 +124,56 @@ hardware_interface::return_type CurieArmController::write(
     (void)time;
     (void)period;
 
-    commands_.arm.base_position = hw_commands_[0] * RAD_TO_DEG;
-    commands_.arm.shoulder_position = hw_commands_[1] * RAD_TO_DEG;
-    commands_.arm.elbow_position = hw_commands_[2] * RAD_TO_DEG;
-    commands_.arm.wrist_pitch_position = hw_commands_[3] * RAD_TO_DEG;
-    commands_.arm.wrist_roll_position = hw_commands_[4] * RAD_TO_DEG;
-    commands_.arm.gripper_position = hw_commands_[5] * RAD_TO_DEG;
+    commands_.arm.base_position = hw_pos_commands_[0] * RAD_TO_DEG;
+    commands_.arm.shoulder_position = hw_pos_commands_[1] * RAD_TO_DEG;
+    commands_.arm.elbow_position = hw_pos_commands_[2] * RAD_TO_DEG;
+    commands_.arm.wrist_pitch_position = hw_pos_commands_[3] * RAD_TO_DEG;
+    commands_.arm.wrist_roll_position = hw_pos_commands_[4] * RAD_TO_DEG;
+    commands_.arm.gripper_position = hw_pos_commands_[5] * RAD_TO_DEG;
+
+    commands_.arm.base_velocity = hw_vel_commands_[0] * RADPS_TO_DEGPM;
+    commands_.arm.shoulder_velocity = hw_vel_commands_[1] * RADPS_TO_DEGPM;
+    commands_.arm.elbow_velocity = hw_vel_commands_[2] * RADPS_TO_DEGPM;
+    commands_.arm.wrist_pitch_velocity = hw_vel_commands_[3] * RADPS_TO_DEGPM;
+    commands_.arm.wrist_roll_velocity = hw_vel_commands_[4] * RADPS_TO_DEGPM;
+
+    // Override position commands when in teleop/velocity mode
+    for (size_t i = 0; i < hw_vel_commands_.size(); i++)
+    {
+        if (arm_vel_state_ && std::abs(hw_pos_commands_[i] - hw_pos_commands_prev_[i]) > 1e-5)
+        {
+            arm_vel_state_ = false;
+        }
+        if (std::abs(hw_vel_commands_[i]) > 0.01)
+        {
+            arm_vel_state_ = true;
+            hw_pos_commands_prev_ = hw_pos_commands_;
+            break;
+        }
+    }
 
     // RCLCPP_INFO(rclcpp::get_logger("ArmSystem"), "ARM COMMANDS: Base: %.2f, Shoulder: %.2f, Elbow: %.2f, Wrist Pitch: %.2f, Wrist Roll: %.2f",
     //     commands_.arm.base_position, commands_.arm.shoulder_position, commands_.arm.elbow_position,
     //     commands_.arm.wrist_pitch_position, commands_.arm.wrist_roll_position);
 
-    if (arm_hardware_.write(static_cast<void*>(&commands_)) < 0)
+    if (arm_vel_state_)
+    {
+        if (arm_vel_hardware_.write(static_cast<void*>(&commands_)) < 0)
+        {
+            return hardware_interface::return_type::ERROR;
+        }
+    }
+    else if (arm_hardware_.write(static_cast<void*>(&commands_)) < 0)
     {
         return hardware_interface::return_type::ERROR;
     }
-
     return hardware_interface::return_type::OK;
 }
 
 CurieArmController::~CurieArmController()
 {
     arm_hardware_.shutdown();
+    arm_vel_hardware_.shutdown();
     arm_hw_thread_.join();
 }
 

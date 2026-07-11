@@ -5,22 +5,13 @@ Welcome to the Curie WS! All of our custom (and modified) ROS2 packages are loca
 For more info on ROS2 (Humble), click [here](https://docs.ros.org/en/humble/index.html).
 
 ### Build
-Ensure you are in the `curie_ws` directory,
+Run the `setup_ws.bash` provided to install package dependencies and modify your PATH:
 ```bash
-cd /path/to/curie/curie_ws
-```
-Install all dependencies:
-```bash
-# Only need to call once
-# ---------------------------------------------------
-sudo apt update && sudo apt install python3-rosdep -y
-sudo rosdep init
-rosdep update
-# ---------------------------------------------------
-rosdep install --from-paths src --ignore-src -y
+./path/to/curie/curie_ws/setup_ws.bash
 ```
 Build and Source ROS packages:
 ```bash
+cd /path/to/curie/curie_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
