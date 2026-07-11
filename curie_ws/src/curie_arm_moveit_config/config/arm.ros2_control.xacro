@@ -52,7 +52,7 @@
             <joint name="gripper">
                 <command_interface name="position"/>
                 <state_interface name="position">
-                  <param name="initial_value">0.0</param> <!-- {initial_positions['gripper_joint']} -->
+                  <param name="initial_value">${initial_positions['gripper']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
