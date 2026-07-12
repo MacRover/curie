@@ -11,6 +11,7 @@ typedef enum : uint8_t
     ELBOW = (SPARK_ARM << 4) | 1,
     WRIST_ROLL = (SPARK_ARM << 4) | 4,
     WRIST_PITCH = (SPARK_ARM << 4) | 3,
+    GRIPPER = (SPARK_ARM << 4) | 5,
 } SparkArmID;
 
 typedef enum : uint8_t
@@ -41,12 +42,14 @@ typedef union __spark_command
         float elbow_position;
         float wrist_roll_position;
         float wrist_pitch_position;
+        float gripper_position;
 
         float base_velocity;
         float shoulder_velocity;
         float elbow_velocity;
         float wrist_roll_velocity;
         float wrist_pitch_velocity;
+        float gripper_velocity;
     } arm;
 } SparkCommand;
 
@@ -68,5 +71,6 @@ typedef union __spark_status
         Status5 elbow_status;
         Status5 wrist_roll_status;
         Status5 wrist_pitch_status;
+        Status5 gripper_status;
     } arm;
 } SparkStatus;

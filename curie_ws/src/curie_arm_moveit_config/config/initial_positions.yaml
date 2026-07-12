@@ -6,3 +6,4 @@ initial_positions:
   shoulder_joint: 0
   wrist_pitch: 0
   wrist_roll: 0
+  gripper: 0

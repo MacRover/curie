@@ -240,7 +240,7 @@ def generate_launch_description():
         delay_arm_controller_spawner,
         delay_arm_position_controller_spawner,
         delay_vel_controller_spawner,
-        # delay_gripper_controller_spawner,
+        delay_gripper_controller_spawner,
         delay_rviz_node,
     ]
     return LaunchDescription(declared_arguments + nodes)

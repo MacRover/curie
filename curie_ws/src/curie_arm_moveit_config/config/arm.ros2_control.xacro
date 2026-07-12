@@ -49,7 +49,16 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
+            <joint name="gripper">
+                <command_interface name="position"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions['gripper']}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+            </joint>
 
         </ros2_control>
+
+
     </xacro:macro>
 </robot>
