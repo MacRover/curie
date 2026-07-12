@@ -16,11 +16,11 @@
 #include <sensor_msgs/msg/nav_sat_fix.h>
 
 
-#include "fans.h"
-#include "TSB.h"
-#include "servo.h"
-#include "science.h"
-#include "viper_topics.h"
+// #include "fans.h"
+// #include "TSB.h"
+// #include "servo.h"
+// #include "science.h"
+// #include "viper_topics.h"
 #include "led.h"
 #include "enums.h"
 // #define ON_ROVER
@@ -37,11 +37,11 @@
 
 // --- STATE VARIABLES ---
 UROS_states state_UROS;
-fan_states state_fans;
-TSB_STATES state_TSB;
-HYDROGEN_STATES state_hydrogen;
-OZONE_STATES state_ozone;
-LORA_STATES state_lora;
+// fan_states state_fans;
+// TSB_STATES state_TSB;
+// HYDROGEN_STATES state_hydrogen;
+// OZONE_STATES state_ozone;
+// LORA_STATES state_lora;
 
 
 #define DOMAIN_ID 5
@@ -66,9 +66,9 @@ rcl_node_t teensy_node;
 
 rcl_publisher_t imu_pub;
 rcl_publisher_t gps_pub;
-rcl_publisher_t tsb_pub;
-rcl_publisher_t hydrogen_pub;
-rcl_publisher_t ozone_pub;
+// rcl_publisher_t tsb_pub;
+// rcl_publisher_t hydrogen_pub;
+// rcl_publisher_t ozone_pub;
 rcl_publisher_t health_pub;
 
 sensor_msgs__msg__Imu imu_msg;
@@ -81,27 +81,24 @@ static uint8_t health_data[6];
 LSM6DSRSensor LSM6DSMR(&Wire1, LSM6DSR_I2C_ADD_H);
 ICM_20948_I2C ICM;
 SFE_UBLOX_GNSS GNSS;
-Adafruit_MCP9601 MCP;
+// Adafruit_MCP9601 MCP;
 #ifdef USING_LORA
-SX1262 radio = new Module(10, 32, 40, 39); // CS, DIO1, NRST, BUSY
+// SX1262 radio = new Module(10, 32, 40, 39); // CS, DIO1, NRST, BUSY
+// int16_t Transmission_State = RADIOLIB_ERR_NONE;
+// volatile bool Transmitted_Flag = false;
 
-int16_t Transmission_State = RADIOLIB_ERR_NONE;
-
-
-volatile bool Transmitted_Flag = false;
-
-  #if defined(ESP8266) || defined(ESP32)
-  ICACHE_RAM_ATTR
-  #endif
-void Packet_Sent() {
-  Transmitted_Flag = true;
-}
+//   #if defined(ESP8266) || defined(ESP32)
+//   ICACHE_RAM_ATTR
+//   #endif
+// void Packet_Sent() {
+//   Transmitted_Flag = true;
+// }
 #endif
-Fan fan1, fan2, fan3;
+// Fan fan1, fan2, fan3;
 
-int servo1_angle_send = 90; 
-int servo2_angle_send = 90;
-int servo3_angle_send = 90;
+// int servo1_angle_send = 90; 
+// int servo2_angle_send = 90;
+// int servo3_angle_send = 90;
 
 uint8_t arduino_mac[] = { 0x04, 0xE9, 0xE5, 0x13, 0x0E, 0x4B };
 IPAddress arduino_ip(192, 168, 1, 177);
@@ -207,19 +204,19 @@ void obc_destory_uros_entities()
 
     rcl_publisher_fini(&gps_pub, &teensy_node);
     rcl_publisher_fini(&imu_pub, &teensy_node);
-    rcl_publisher_fini(&tsb_pub, &teensy_node);
-    rcl_publisher_fini(&hydrogen_pub, &teensy_node);
-    rcl_publisher_fini(&ozone_pub, &teensy_node);
-    rcl_publisher_fini(&health_pub, &teensy_node);
-    rcl_subscription_fini(&servo1_sub, &teensy_node);
-    rcl_subscription_fini(&servo2_sub, &teensy_node);
+    // rcl_publisher_fini(&tsb_pub, &teensy_node);
+    // rcl_publisher_fini(&hydrogen_pub, &teensy_node);
+    // rcl_publisher_fini(&ozone_pub, &teensy_node);
+rcl_publisher_fini(&health_pub, &teensy_node);
+    // rcl_subscription_fini(&servo1_sub, &teensy_node);
+    // rcl_subscription_fini(&servo2_sub, &teensy_node);
 
     #ifdef USING_LED
     rcl_subscription_fini(&led_sub, &teensy_node);
     rclc_executor_fini(&led_executor);
     #endif
 
-    destroy_viper_topics(&teensy_node);
+    // destroy_viper_topics(&teensy_node);
     rcl_node_fini(&teensy_node);
     rclc_support_fini(&support);
 }
@@ -280,24 +277,24 @@ bool obc_setup_uros()
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, NavSatFix), 
         "gps"
     ));
-     RCCHECK(rclc_publisher_init_default(
-        &tsb_pub, 
-        &teensy_node, 
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray), 
-        "tsb"
-    ));
-    RCCHECK(rclc_publisher_init_default(
-        &hydrogen_pub, 
-        &teensy_node, 
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), 
-        "hydrogen"
-    ));
-    RCCHECK(rclc_publisher_init_default(
-        &ozone_pub, 
-        &teensy_node, 
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), 
-        "o3"
-    ));
+     // RCCHECK(rclc_publisher_init_default(
+    //     &tsb_pub, 
+    //     &teensy_node, 
+    //     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray), 
+    //     "tsb"
+    // ));
+    // RCCHECK(rclc_publisher_init_default(
+    //     &hydrogen_pub, 
+    //     &teensy_node, 
+    //     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), 
+    //     "hydrogen"
+    // ));
+    // RCCHECK(rclc_publisher_init_default(
+    //     &ozone_pub, 
+    //     &teensy_node, 
+    //     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), 
+    //     "o3"
+    // ));
     RCCHECK(rclc_publisher_init_default(
         &health_pub, 
         &teensy_node, 
@@ -345,46 +342,43 @@ void obc_setup_gps()
 
 bool obc_setup_tsb() 
 {
-#ifdef USING_TSB
-    if (!MCP.begin(MCP9601_ADDR, &Wire1)) { return false; }
-    MCP.setADCresolution(MCP9600_ADCRESOLUTION_18);
-    MCP.setThermocoupleType(MCP9600_TYPE_K);
-    // setChannel(&tsb1, 0);
-    tsb_init();  
-#endif
-return true;
+    // #ifdef USING_TSB
+    //     if (!MCP.begin(MCP9601_ADDR, &Wire1)) { return false; }
+    //     MCP.setADCresolution(MCP9600_ADCRESOLUTION_18);
+    //     MCP.setThermocoupleType(MCP9600_TYPE_K);
+    //     // setChannel(&tsb1, 0);
+    //     tsb_init();  
+    // #endif
+    return true;
 }
 
 bool obc_setup_fans()
 {
-#ifdef USING_FANS
-    initializeFan(&fan1, 5);
-    initializeFan(&fan2, 6);
-    // initializeFan(&fan3, 7);
-
-    enableFanControl(&fan1);
-    enableFanControl(&fan2);
-    // enableFanControl(&fan3);
-#endif
-return true;
+    // #ifdef USING_FANS
+    //     initializeFan(&fan1, 5);
+    //     initializeFan(&fan2, 6);
+    //     enableFanControl(&fan1);
+    //     enableFanControl(&fan2);
+    // #endif
+    return true;
 }
 
 bool obc_setup_hydrogen()
 {
-    #ifdef USING_SCIENCE_SENSORS
-        if (!hydrogen_sensor.begin()) {return false;}
-        hydrogen_sensor.setTempCompensation(hydrogen_sensor.OFF);  
-        hydrogen_sensor.changeAcquireMode(hydrogen_sensor.INITIATIVE);
-    #endif
+    // #ifdef USING_SCIENCE_SENSORS
+    //     if (!hydrogen_sensor.begin()) {return false;}
+    //     hydrogen_sensor.setTempCompensation(hydrogen_sensor.OFF);  
+    //     hydrogen_sensor.changeAcquireMode(hydrogen_sensor.INITIATIVE);
+    // #endif
     return true;
 }
 
 bool obc_setup_ozone()
 {
-    #ifdef USING_SCIENCE_SENSORS
-        if (!ozone_sensor.begin(I2C_ADDRESS_OZONE_SENSOR)) {return false;};
-        ozone_sensor.setModes(MEASURE_MODE_PASSIVE);
-    #endif
+    // #ifdef USING_SCIENCE_SENSORS
+    //     if (!ozone_sensor.begin(I2C_ADDRESS_OZONE_SENSOR)) {return false;};
+    //     ozone_sensor.setModes(MEASURE_MODE_PASSIVE);
+    // #endif
     return true;
 }
 
@@ -401,22 +395,22 @@ void setup()
    health_msg_setup(); 
    obc_setup_imu();
    obc_setup_gps();
-   obc_setup_tsb();
+   // obc_setup_tsb();
     state_UROS = UROS_FOUND;
     #ifdef USING_LORA
-    state_lora = LORA_INIT;
+    // state_lora = LORA_INIT;
     #endif 
-    state_TSB = TSB_INIT;
-    state_fans = FANS_INIT;
-    state_hydrogen = HYDROGEN_INIT;
-    state_ozone = OZONE_INIT;
+    // state_TSB = TSB_INIT;
+    // state_fans = FANS_INIT;
+    // state_hydrogen = HYDROGEN_INIT;
+    // state_ozone = OZONE_INIT;
 
     #ifdef USING_LED
     LED_setup();
     #endif
 
-    pwm.begin();
-    pwm.setPWMFreq(50);  
+    // pwm.begin();
+    // pwm.setPWMFreq(50);    
 }
 
 void Uros_SM(){
@@ -448,9 +442,9 @@ void Uros_SM(){
 
             rcl_publish(&imu_pub, &imu_msg, NULL);
             rcl_publish(&gps_pub, &gps_msg, NULL);
-            rcl_publish(&tsb_pub, &tsb_msg, NULL);
-            rcl_publish(&hydrogen_pub, &hydrogen_msg, NULL);
-            rcl_publish(&ozone_pub, &ozone_msg, NULL);
+            // rcl_publish(&tsb_pub, &tsb_msg, NULL);
+            // rcl_publish(&hydrogen_pub, &hydrogen_msg, NULL);
+            // rcl_publish(&ozone_pub, &ozone_msg, NULL);
             rcl_publish(&health_pub, &health_msg, NULL);
         }
         #ifdef USING_SERVO
@@ -482,197 +476,197 @@ void Uros_SM(){
 }
 }
 
-void FANS_SM() {
-  switch (state_fans) {
-    case FANS_INIT:
-    if (obc_setup_fans()) {
-        state_fans = FANS_OK;
-    } 
-    else {
-        state_fans = FANS_ERROR;
-    }
-    break;
+// void FANS_SM() {
+//   switch (state_fans) {
+//     case FANS_INIT:
+//     if (obc_setup_fans()) {
+//         state_fans = FANS_OK;
+//     } 
+//     else {
+//         state_fans = FANS_ERROR;
+//     }
+//     break;
+//
+//
+//     case FANS_OK:
+//         setFanRPM(&fan1, MIN_RPM);
+//         setFanRPM(&fan2, MIN_RPM);
+//         // setFanRPM(&fan3, MIN_RPM);
+//       break;
+//
+//     case FANS_ERROR:
+//       // Try to connect to fans every 5 seconds 
+//       if (millis() - prev_time_fan > 5000){
+//         prev_time_fan = millis();
+//
+//         if (obc_setup_fans()){
+//           state_fans = FANS_OK;
+//         }
+//         else{
+//           state_fans = FANS_ERROR;
+//         }
+//       }
+//       break;
+//       
+//
+//     default:
+//       state_fans = FANS_INIT;
+//       break;
+//   }
+// }
 
+// void TSB_SM(){
+//   switch(state_TSB){
+//     case TSB_INIT:
+//       if (obc_setup_tsb()){
+//         state_TSB = TSB_OK;
+//       } 
+//       else {
+//         state_TSB = TSB_ERROR;
+//       }
+//       break;
+//
+//     case TSB_OK:
+//       tsb_update(&MCP); 
+//       break; 
+//
+//     case TSB_ERROR:
+//     // Try to connect to TSB every 5 seconds 
+//       if (millis() - prev_time_tsb > 5000) {
+//         prev_time_tsb = millis();
+//         if (obc_setup_tsb()){
+//           state_TSB = TSB_OK;
+//         }
+//         else {
+//           state_TSB = TSB_ERROR;
+//         }
+//       }
+//       break;
+//
+//     default:
+//       state_TSB = TSB_INIT;
+//       break;
+//   }
+// }
 
-    case FANS_OK:
-        setFanRPM(&fan1, MIN_RPM);
-        setFanRPM(&fan2, MIN_RPM);
-        // setFanRPM(&fan3, MIN_RPM);
-      break;
+// #ifdef USING_LORA
+// 
+// void LORA_SM() {
+//   switch (state_lora) {
+//
+//     case LORA_INIT: {
+//       int16_t state = radio.begin();
+//       radio.setPacketSentAction(Packet_Sent);
+//       state_lora = LORA_TRANSMIT;
+//       break;
+//     }
+//
+//     case LORA_TRANSMIT: {
+//       String viper_message = format_viper_message();
+//       String payload =   "LAT:" + String(gps_msg.latitude, 6)
+//                        + ",LON:" + String(gps_msg.longitude, 6)
+//                        + ",ALT:" + String(gps_msg.altitude, 2)
+//                        + ",COV:["
+//                        + String(gps_msg.position_covariance[8], 2)
+//                        + "," + String(gps_msg.position_covariance[4], 2)
+//                        + "," + String(gps_msg.position_covariance[0], 2)
+//                        + "]"
+//                        + "," + String(gps_msg.status.status)
+//                        + "\n"
+//                        + viper_message;
+//
+//       Transmitted_Flag = false;
+//       Transmission_State = radio.startTransmit(payload);
+//       if (Transmission_State != RADIOLIB_ERR_NONE) {
+//         state_lora = LORA_FINISH;
+//       } else {
+//         state_lora = LORA_FLAG;
+//       }
+//       break;
+//     }
+//
+//     case LORA_FLAG: {
+//       if (Transmitted_Flag) {
+//         state_lora = LORA_FINISH;
+//       }
+//       break;
+//     }
+//
+//     case LORA_FINISH: {
+//       radio.finishTransmit();
+//       state_lora = LORA_DELAY;
+//       break;
+//     }
+//
+//     case LORA_DELAY: {
+//       if (millis() - prev_time_lora > 1000) {
+//         prev_time_lora = millis();
+//         state_lora = LORA_TRANSMIT;
+//       }
+//       break;
+//     }
+//
+//   }
+// }
+// #endif
 
-    case FANS_ERROR:
-      // Try to connect to fans every 5 seconds 
-      if (millis() - prev_time_fan > 5000){
-        prev_time_fan = millis();
+// void HYDROGEN_SM(){
+//   switch(state_hydrogen){
+//     case HYDROGEN_INIT:
+//         if (millis() - prev_time_hydrogen > 5000) {
+//             prev_time_hydrogen = millis();
+//             if (obc_setup_hydrogen()) {
+//             state_hydrogen = HYDROGEN_OK;
+//             }
+//         }
+//       break;
+//
+//     case HYDROGEN_OK:
+//       if (hydrogen_sensor.dataIsAvailable())
+//       {
+//         update_hydrogen_message(AllDataAnalysis.gasconcentration);
+//       }
+//       //IDK how to error check for this class
+//       break; 
+//
+//     case HYDROGEN_ERROR:
+//       break;
+//
+//     default:
+//       state_hydrogen = HYDROGEN_INIT;
+//       break;
+//   }
+// }
 
-        if (obc_setup_fans()){
-          state_fans = FANS_OK;
-        }
-        else{
-          state_fans = FANS_ERROR;
-        }
-      }
-      break;
-      
-
-    default:
-      state_fans = FANS_INIT;
-      break;
-  }
-}
-
-void TSB_SM(){
-  switch(state_TSB){
-    case TSB_INIT:
-      if (obc_setup_tsb()){
-        state_TSB = TSB_OK;
-      } 
-      else {
-        state_TSB = TSB_ERROR;
-      }
-      break;
-
-    case TSB_OK:
-      tsb_update(&MCP); 
-      break; 
-
-    case TSB_ERROR:
-    // Try to connect to TSB every 5 seconds 
-      if (millis() - prev_time_tsb > 5000) {
-        prev_time_tsb = millis();
-        if (obc_setup_tsb()){
-          state_TSB = TSB_OK;
-        }
-        else {
-          state_TSB = TSB_ERROR;
-        }
-      }
-      break;
-
-    default:
-      state_TSB = TSB_INIT;
-      break;
-  }
-}
-
-#ifdef USING_LORA
-
-void LORA_SM() {
-  switch (state_lora) {
-
-    case LORA_INIT: {
-      int16_t state = radio.begin();
-      radio.setPacketSentAction(Packet_Sent);
-      state_lora = LORA_TRANSMIT;
-      break;
-    }
-
-    case LORA_TRANSMIT: {
-      String viper_message = format_viper_message();
-      String payload =   "LAT:" + String(gps_msg.latitude, 6)
-                       + ",LON:" + String(gps_msg.longitude, 6)
-                       + ",ALT:" + String(gps_msg.altitude, 2)
-                       + ",COV:["
-                       + String(gps_msg.position_covariance[8], 2)
-                       + "," + String(gps_msg.position_covariance[4], 2)
-                       + "," + String(gps_msg.position_covariance[0], 2)
-                       + "]"
-                       + "," + String(gps_msg.status.status)
-                       + "\n"
-                       + viper_message;
-
-      Transmitted_Flag = false;
-      Transmission_State = radio.startTransmit(payload);
-      if (Transmission_State != RADIOLIB_ERR_NONE) {
-        state_lora = LORA_FINISH;
-      } else {
-        state_lora = LORA_FLAG;
-      }
-      break;
-    }
-
-    case LORA_FLAG: {
-      if (Transmitted_Flag) {
-        state_lora = LORA_FINISH;
-      }
-      break;
-    }
-
-    case LORA_FINISH: {
-      radio.finishTransmit();
-      state_lora = LORA_DELAY;
-      break;
-    }
-
-    case LORA_DELAY: {
-      if (millis() - prev_time_lora > 1000) {
-        prev_time_lora = millis();
-        state_lora = LORA_TRANSMIT;
-      }
-      break;
-    }
-
-  }
-}
-#endif
-
-void HYDROGEN_SM(){
-  switch(state_hydrogen){
-    case HYDROGEN_INIT:
-        if (millis() - prev_time_hydrogen > 5000) {
-            prev_time_hydrogen = millis();
-            if (obc_setup_hydrogen()) {
-            state_hydrogen = HYDROGEN_OK;
-            }
-        }
-      break;
-
-    case HYDROGEN_OK:
-      if (hydrogen_sensor.dataIsAvailable())
-      {
-        update_hydrogen_message(AllDataAnalysis.gasconcentration);
-      }
-      //IDK how to error check for this class
-      break; 
-
-    case HYDROGEN_ERROR:
-      break;
-
-    default:
-      state_hydrogen = HYDROGEN_INIT;
-      break;
-  }
-}
-
-void OZONE_SM(){
-  switch(state_ozone){
-    case OZONE_INIT:
-      if (millis() - prev_time_ozone > 5000) {
-            prev_time_ozone = millis();
-            if (obc_setup_ozone()) {
-            state_ozone = OZONE_OK;
-            }
-        }
-      break;
-
-    case OZONE_OK:
-    {
-      int16_t ozoneConcentration = ozone_sensor.readOzoneData();
-      if (ozoneConcentration >= 0) {
-        update_ozone_message(ozoneConcentration);
-      }
-    }
-      break; 
-
-    case OZONE_ERROR:
-
-      break;
-
-    default:
-      state_ozone = OZONE_INIT;
-      break;
-  }
-}
+// void OZONE_SM(){
+//   switch(state_ozone){
+//     case OZONE_INIT:
+//       if (millis() - prev_time_ozone > 5000) {
+//             prev_time_ozone = millis();
+//             if (obc_setup_ozone()) {
+//             state_ozone = OZONE_OK;
+//             }
+//         }
+//       break;
+//
+//     case OZONE_OK:
+//     {
+//       int16_t ozoneConcentration = ozone_sensor.readOzoneData();
+//       if (ozoneConcentration >= 0) {
+//         update_ozone_message(ozoneConcentration);
+//       }
+//     }
+//       break; 
+//
+//     case OZONE_ERROR:
+//
+//       break;
+//
+//     default:
+//       state_ozone = OZONE_INIT;
+//       break;
+//   }
+// }
 
 void loop()
 {
@@ -718,11 +712,11 @@ void loop()
 #endif
 
 health_msg.data.data[0] = state_UROS;
-health_msg.data.data[1] = state_fans;
-health_msg.data.data[2] = state_TSB;
-health_msg.data.data[3] = state_lora;
-health_msg.data.data[4] = state_hydrogen;
-health_msg.data.data[5] = state_ozone;
+// health_msg.data.data[1] = state_fans;
+// health_msg.data.data[2] = state_TSB;
+// health_msg.data.data[3] = state_lora;
+// health_msg.data.data[4] = state_hydrogen;
+// health_msg.data.data[5] = state_ozone;
 
 
 
