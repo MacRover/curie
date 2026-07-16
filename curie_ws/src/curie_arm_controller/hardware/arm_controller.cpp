@@ -99,12 +99,12 @@ hardware_interface::return_type CurieArmController::read(
     joint_positions_[4] = status_.arm.wrist_roll_status.dutyCycleEncPosition / RAD_TO_DEG;
     joint_positions_[5] = status_.arm.gripper_status.dutyCycleEncPosition / RAD_TO_DEG;
 
-    joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[1] = status_.arm.shoulder_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[2] = status_.arm.elbow_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[3] = status_.arm.wrist_pitch_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
-    joint_velocities_[5] = status_.arm.gripper_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RAD_TO_DEG;
+    joint_velocities_[1] = status_.arm.shoulder_status.dutyCycleEncVelocity / RAD_TO_DEG;
+    joint_velocities_[2] = status_.arm.elbow_status.dutyCycleEncVelocity / RAD_TO_DEG;
+    joint_velocities_[3] = status_.arm.wrist_pitch_status.dutyCycleEncVelocity / RAD_TO_DEG;
+    joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RAD_TO_DEG;
+    joint_velocities_[5] = status_.arm.gripper_status.dutyCycleEncVelocity / RAD_TO_DEG;
 
     // Shift domain from [0, 2*pi] to [-pi, pi]
     for (size_t i = 0; i < joint_positions_.size(); i++)
