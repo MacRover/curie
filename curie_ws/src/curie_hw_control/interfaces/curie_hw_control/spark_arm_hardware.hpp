@@ -35,5 +35,6 @@ namespace hardware
         SparkMax elbow_;
         SparkMax wrist_roll_;
         SparkMax wrist_pitch_;
+        SparkMax gripper_;
     };
 }

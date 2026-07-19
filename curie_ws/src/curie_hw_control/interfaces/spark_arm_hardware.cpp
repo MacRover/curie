@@ -1,11 +1,14 @@
 #include "curie_hw_control/spark_arm_hardware.hpp"
 
+#define CHECK_RET_VAL(res, x) res = (x); if (!res.has_value()) return -1; if (res.value().result_code != 0) return -1;
+
 hardware::SparkArmInterface::SparkArmInterface() : 
     base_(can_transport_, BASE),
     shoulder_(can_transport_, SHOULDER),
     elbow_(can_transport_, ELBOW),
     wrist_roll_(can_transport_, WRIST_ROLL),
-    wrist_pitch_(can_transport_, WRIST_PITCH)
+    wrist_pitch_(can_transport_, WRIST_PITCH),
+    gripper_(can_transport_, GRIPPER)
 {
 
 }
@@ -17,6 +20,28 @@ int8_t hardware::SparkArmInterface::initialize(void* config)
     if (!can_transport_.isOpen())
     {
         return -1;
+    }
+
+    if (!isVCAN)
+    {
+        // This is needed for some reason; When a SparkMAX is power cycled in closed loop mode, 
+        // its setpoint is relative to its current position rather than the zero of the encoder.
+        // Perhaps something in the firmwares control loop is accidentially being saved to memory persistently?
+        // For now, the fix is to refresh the sensor type upon initializing the hardware interface
+        std::optional<ParamWriteResponse> response;
+        CHECK_RET_VAL(response, base_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, shoulder_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, elbow_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_roll_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_pitch_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, gripper_.setSensorType(NONE, std::chrono::milliseconds(100)));
+
+        CHECK_RET_VAL(response, base_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, shoulder_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, elbow_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_roll_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, wrist_pitch_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        CHECK_RET_VAL(response, gripper_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
     }
     return 0;
 }
@@ -41,6 +66,7 @@ int8_t hardware::SparkArmInterface::read(void* data)
     status_data->arm.elbow_status = elbow_.getStatus5();
     status_data->arm.wrist_roll_status = wrist_roll_.getStatus5();
     status_data->arm.wrist_pitch_status = wrist_pitch_.getStatus5();
+    status_data->arm.gripper_status = gripper_.getStatus5();
     return 0;
 }
 
@@ -66,6 +92,9 @@ int8_t hardware::SparkArmInterface::write(void* data)
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
     wrist_pitch_.setPosition(arm_cmd->arm.wrist_pitch_position);
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+    gripper_.setPosition(arm_cmd->arm.gripper_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
     return 0;
@@ -99,6 +128,9 @@ void hardware::SparkArmInterface::run()
                 break;
             case WRIST_PITCH:
                 wrist_pitch_.processFrame(frame);
+                break;
+            case GRIPPER:
+                gripper_.processFrame(frame);
                 break;
             default:
                 break;

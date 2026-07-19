@@ -20,7 +20,7 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            "use_vcan",
+            "use_mock_hardware",
             default_value="false",
             description="Use vcan interface for hardware communication.",
         )
@@ -28,7 +28,7 @@ def generate_launch_description():
 
     # Initialize Arguments
     gui = LaunchConfiguration("gui")
-    use_vcan = LaunchConfiguration("use_vcan")
+    use_mock_hardware = LaunchConfiguration("use_mock_hardware")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -40,7 +40,7 @@ def generate_launch_description():
             ),
             " ",
             "use_vcan:=",
-            use_vcan,
+            use_mock_hardware,
         ]
     )
     robot_description = {"robot_description": robot_description_content}
@@ -94,6 +94,15 @@ def generate_launch_description():
         arguments=["mock_diffbot_base_controller", "--controller-manager", "/controller_manager"],
     )
 
+    heartbeat_node = Node(
+        package="curie_hw_control",
+        executable="sparkmax_heartbeat",
+        name="heartbeat_node",
+        parameters=[{
+            "use_vcan": use_mock_hardware
+        }],
+    )
+
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -111,6 +120,7 @@ def generate_launch_description():
     )
 
     nodes = [
+        heartbeat_node,
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,

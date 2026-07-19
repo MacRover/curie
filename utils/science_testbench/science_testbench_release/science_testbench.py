@@ -34,7 +34,7 @@ The COM port of the CH340 Transceiver MUST be updated here
 
 """
 
-PORT = "COM5"  # Change this to your COM port
+PORT = "COM9"  # Change this to your COM port
 
 """
 

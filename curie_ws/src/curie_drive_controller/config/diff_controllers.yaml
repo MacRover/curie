@@ -13,12 +13,12 @@ mock_diffbot_base_controller:
     left_wheel_names: ["front_left_wheel_joint", "mid_left_wheel_joint", "back_left_wheel_joint"]
     right_wheel_names: ["front_right_wheel_joint", "mid_right_wheel_joint", "back_right_wheel_joint"]
 
-    wheel_separation: 0.10
-    wheel_radius: 0.015
+    wheel_separation: 1.0
+    wheel_radius: 0.2286
 
     wheel_separation_multiplier: 1.0
-    left_wheel_radius_multiplier: 1.0
-    right_wheel_radius_multiplier: 1.0
+    left_wheel_radius_multiplier: 0.0222
+    right_wheel_radius_multiplier: 0.0222
 
     publish_rate: 20.0
     odom_frame_id: odom
@@ -41,7 +41,8 @@ mock_diffbot_base_controller:
     linear.x.has_jerk_limits: false
     linear.x.max_velocity: 1.0
     linear.x.min_velocity: -1.0
-    linear.x.max_acceleration: 1.0
+    linear.x.max_acceleration: 7.0
+    linear.x.min_acceleration: -3.0
     linear.x.max_jerk: 0.0
     linear.x.min_jerk: 0.0
 
@@ -50,7 +51,7 @@ mock_diffbot_base_controller:
     angular.z.has_jerk_limits: false
     angular.z.max_velocity: 1.0
     angular.z.min_velocity: -1.0
-    angular.z.max_acceleration: 1.0
-    angular.z.min_acceleration: -1.0
+    angular.z.max_acceleration: 10.0
+    angular.z.min_acceleration: -2.0
     angular.z.max_jerk: 0.0
     angular.z.min_jerk: 0.0

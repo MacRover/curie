@@ -10,16 +10,39 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="arm">
-        <chain base_link="Baseplate_Part" tip_link="Wrist_Pitch"/>
+        <joint name="base_rotation"/>
+        <joint name="shoulder_joint"/>
+        <joint name="elbow_joint"/>
+        <joint name="wrist_pitch"/>
+        <joint name="wrist_roll"/>
     </group>
+    <group name="hand">
+        <link name="jaw_link"/>
+    </group>
+    <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
+    <group_state name="ready" group="arm">
+        <joint name="base_rotation" value="0"/>
+        <joint name="elbow_joint" value="0.7853"/>
+        <joint name="shoulder_joint" value="0.7853"/>
+        <joint name="wrist_pitch" value="1.5707"/>
+        <joint name="wrist_roll" value="1.5707"/>
+    </group_state>
+    <group_state name="closed" group="hand">
+        <joint name="gripper" value="1.55"/>
+    </group_state>
+    <group_state name="open" group="hand">
+        <joint name="gripper" value="1"/>
+    </group_state>
+    <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
+    <end_effector name="hand" parent_link="endeffector_link" group="hand"/>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
-    <virtual_joint name="world_joint" type="fixed" parent_frame="world" child_link="Baseplate_Part"/>
+    <!-- <virtual_joint name="world_joint" type="fixed" parent_frame="world_joint" child_link="base_link"/> -->
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
-    <disable_collisions link1="Base" link2="Baseplate_Part" reason="Adjacent"/>
-    <disable_collisions link1="Base" link2="Bicep_Linkage" reason="Adjacent"/>
-    <disable_collisions link1="Base" link2="Forearm_Linkage" reason="Never"/>
-    <disable_collisions link1="Bicep_Linkage" link2="Forearm_Linkage" reason="Adjacent"/>
-    <disable_collisions link1="Forearm_Linkage" link2="Wrist_Base" reason="Adjacent"/>
-    <disable_collisions link1="Forearm_Linkage" link2="Wrist_Pitch" reason="Never"/>
-    <disable_collisions link1="Wrist_Base" link2="Wrist_Pitch" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="shoulder_Link" reason="Adjacent"/>
+    <disable_collisions link1="bicep_Link" link2="forearm_Link" reason="Adjacent"/>
+    <disable_collisions link1="bicep_Link" link2="shoulder_Link" reason="Adjacent"/>
+    <disable_collisions link1="endeffector_link" link2="jaw_link" reason="Adjacent"/>
+    <disable_collisions link1="endeffector_link" link2="wrist_link" reason="Never"/>
+    <disable_collisions link1="endeffector_link" link2="forearm_Link" reason="Adjacent"/>
+    <disable_collisions link1="forearm_Link" link2="wrist_link" reason="Adjacent"/>
 </robot>
