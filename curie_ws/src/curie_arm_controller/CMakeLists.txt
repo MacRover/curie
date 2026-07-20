@@ -14,8 +14,6 @@ find_package(hardware_interface REQUIRED)
 find_package(curie_hw_control REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(rclcpp_action REQUIRED)
-find_package(control_msgs REQUIRED)
 
 add_library(
   curie_arm_controller
@@ -39,18 +37,6 @@ ament_target_dependencies(
 
 add_executable(move_joints movement_plans/move_joints.cpp)
 add_executable(move_zig_zag movement_plans/move_zig_zag.cpp)
-
-add_executable(
-  gripper_stall_guard
-  gripper_control/gripper_stall_guard.cpp
-)
-
-ament_target_dependencies(
-  gripper_stall_guard
-  rclcpp
-  rclcpp_action
-  control_msgs
-)
 ament_target_dependencies(
   move_joints
   rclcpp
@@ -82,7 +68,6 @@ install(TARGETS curie_arm_controller
 install(TARGETS
   move_joints
   move_zig_zag
-  gripper_stall_guard
   DESTINATION lib/${PROJECT_NAME}
 )
 
