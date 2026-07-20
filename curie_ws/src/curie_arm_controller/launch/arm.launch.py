@@ -60,7 +60,7 @@ def generate_launch_description():
 
     servo_yaml = load_yaml("curie_arm_moveit_config", "config/servo_config.yaml")
     servo_params = {"moveit_servo": servo_yaml}
-    low_pass_filter_coeff = {"butterworth_filter_coeff": 3.0}
+    low_pass_filter_coeff = {"butterworth_filter_coeff": 70.0}
 
     # Get URDF via xacro
     robot_description_content = Command(
