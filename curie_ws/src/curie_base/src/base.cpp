@@ -41,11 +41,14 @@ typedef enum : uint8_t
 } ROSParamIndex;
 
 base::Basestation::Basestation(const rclcpp::NodeOptions & options) : 
-    Node("basestation", options), 
+    Node("basestation", options),
     servo_request_handled(true),
-    request_handled(true), 
+    request_handled(true),
     servo_button_pressed(false),
     button_pressed(false),
+    gripper_open_button_pressed(false),
+    gripper_close_button_pressed(false),
+    gripper_request_active(false),
     arm_mode(JOINT_VELOCITY)
 {
     this->declare_parameter("drive.max_linear_speed", 1.0);
@@ -57,6 +60,9 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) :
     this->declare_parameter("arm.max_elbow_angular_speed", 1.0);
     this->declare_parameter("arm.max_pitch_angular_speed", 1.0);
     this->declare_parameter("arm.max_roll_angular_speed", 1.0);
+    this->declare_parameter("gripper.open_position", 0.5); // Test Value
+    this->declare_parameter("gripper.close_position", 0.0); // Test Value
+    this->declare_parameter("gripper.max_effort", 1.0);
 
     this->declare_parameter("arm.servoing", false);
     servoing = this->get_parameter("arm.servoing").as_bool();
@@ -69,6 +75,9 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) :
     arm_max_speeds.push_back(this->get_parameter("arm.max_elbow_angular_speed").as_double());
     arm_max_speeds.push_back(this->get_parameter("arm.max_pitch_angular_speed").as_double());
     arm_max_speeds.push_back(this->get_parameter("arm.max_roll_angular_speed").as_double());
+    gripper_open_position = this->get_parameter("gripper.open_position").as_double();
+    gripper_close_position = this->get_parameter("gripper.close_position").as_double();
+    gripper_max_effort = this->get_parameter("gripper.max_effort").as_double();
 
     enable_req_ = std::make_shared<std_srvs::srv::SetBool::Request>();
     enable_client_ = this->create_client<std_srvs::srv::SetBool>("heartbeat/enable");
@@ -101,6 +110,7 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) :
         "joy1", 10, std::bind(&Basestation::_joy_arm_callback, this, std::placeholders::_1));
     arm_joint_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/arm_controller/vel_commands", 10);
     arm_servo_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_node/delta_twist_cmds", 10);
+    gripper_client_ = rclcpp_action::create_client<GripperCommand>(this, "/hand_controller/gripper_cmd");
 
     RCLCPP_INFO(this->get_logger(), "Basestation OK");
 }
@@ -176,7 +186,144 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
     {
         _handle_servo_state(button_ik, button_fk);   
     }
+    _handle_gripper_state(msg->buttons[LEFT_BUMPER], msg->buttons[RIGHT_BUMPER]);
     _handle_robot_state(msg->buttons[A], msg->buttons[B]);
+/*
+LB = open
+RB = close
+*/
+}
+
+void base::Basestation::_handle_gripper_state(bool open, bool close){
+    if (open && close){
+        return;
+    }
+
+    if (!gripper_open_button_pressed && open){
+        gripper_open_button_pressed = true;
+
+        RCLCPP_INFO(this->get_logger(), "Opening gripper");
+        _send_gripper_goal(gripper_open_position);
+
+    }else if (!open){
+        gripper_open_button_pressed = false;
+    }
+
+    if (!gripper_close_button_pressed && close){
+        gripper_close_button_pressed = true;
+
+        RCLCPP_INFO(this->get_logger(), "Closing gripper");
+        _send_gripper_goal(gripper_close_position);
+        
+    }else if (!close){
+        gripper_close_button_pressed = false;
+    }
+}
+
+void base::Basestation::_send_gripper_goal(double target_position){
+    if (gripper_request_active){
+        RCLCPP_WARN(this->get_logger(), "Gripper command already in progress");
+        return;
+    }
+
+    if (!gripper_client_->action_server_is_ready()){
+        RCLCPP_WARN(this->get_logger(), "Gripper action server is unavailable");
+        return;
+    }
+
+    gripper_request_active = true;
+
+    GripperCommand::Goal goal;
+    goal.command.position = target_position;
+    goal.command.max_effort = gripper_max_effort;
+
+    auto send_goal_options = rclcpp_action::Client<GripperCommand>::SendGoalOptions();
+
+    send_goal_options.goal_response_callback = [this](const GripperGoalHandle::SharedPtr & goal_handle){
+        if (!goal_handle){
+            RCLCPP_ERROR(this->get_logger(), "Gripper goal was rejected");
+            gripper_request_active = false;
+            return;
+        }
+        RCLCPP_INFO(this->get_logger(), "Gripper goal accepted");
+    };
+
+    send_goal_options.result_callback = [this](const GripperGoalHandle::WrappedResult & result){
+        _handle_gripper_result(result);
+    };
+
+    RCLCPP_INFO(this->get_logger(), "Sending gripper goal: %.4f", target_position);
+
+    gripper_client_->async_send_goal(goal, send_goal_options);
+}
+
+void base::Basestation::_handle_gripper_result(const base::GripperGoalHandle::WrappedResult & result){
+    if (!result.result){
+        RCLCPP_ERROR(this->get_logger(), "Gripper goal returned no result");
+        gripper_request_active = false;
+        return;
+    }
+
+    RCLCPP_INFO(
+        this->get_logger(),
+        "Gripper result: position=%.4f, stalled=%s, reached_goal=%s",
+        result.result->position,
+        result.result->stalled ? "true" : "false",
+        result.result->reached_goal ? "true" : "false"
+    );
+
+    if (!result.result->stalled){
+        gripper_request_active = false;
+        return;
+    }
+
+    RCLCPP_WARN(this->get_logger(), "Gripper stalled at position %.4f", result.result->position);
+
+    _send_gripper_hold_goal(result.result->position);
+}
+
+void base::Basestation::_send_gripper_hold_goal(double hold_position){
+    GripperCommand::Goal goal;
+    goal.command.position = hold_position;
+    goal.command.max_effort = gripper_max_effort;
+
+    auto send_goal_options =rclcpp_action::Client<GripperCommand>::SendGoalOptions();
+
+    send_goal_options.goal_response_callback = [this](const GripperGoalHandle::SharedPtr & goal_handle){
+        if (!goal_handle){
+            RCLCPP_ERROR(this->get_logger(), "Gripper hold goal was rejected");
+            gripper_request_active = false;
+            return;
+        }
+
+        gripper_hold_goal_handle_ = goal_handle;
+
+        RCLCPP_INFO(this->get_logger(), "Hold goal accepted, sending cancel request");
+
+        gripper_client_->async_cancel_goal(goal_handle, [this](auto cancel_response){
+            if (cancel_response->goals_canceling.empty()){
+                RCLCPP_WARN(this->get_logger(), "Hold goal completed before cancellation");
+                return;
+            }
+
+            RCLCPP_INFO(this->get_logger(), "Hold goal cancel accepted");
+        });
+    };
+
+    send_goal_options.result_callback = [this](const GripperGoalHandle::WrappedResult & result){
+        if (result.code == rclcpp_action::ResultCode::CANCELED){
+            RCLCPP_INFO(this->get_logger(), "Gripper is holding the stall position");
+        }else{
+            RCLCPP_INFO(this->get_logger(), "Gripper hold goal finished");
+        }
+
+        gripper_hold_goal_handle_.reset();
+        gripper_request_active = false;
+    };
+
+    RCLCPP_INFO(this->get_logger(), "Sending hold goal at position %.4f", hold_position);
+
+    gripper_client_->async_send_goal(goal, send_goal_options);
 }
 
 void base::Basestation::_joy_drive_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
