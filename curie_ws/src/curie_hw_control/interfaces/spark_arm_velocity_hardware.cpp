@@ -53,19 +53,19 @@ int8_t hardware::SparkArmVelocityInterface::write(void* data)
         return -1;
     }
 
-    base_.setVelocity(arm_cmd->arm.base_velocity);
+    base_.setVelocity(arm_cmd->arm.base_velocity, PID_SLOT_VELOCITY);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    shoulder_.setVelocity(arm_cmd->arm.shoulder_velocity);
+    shoulder_.setVelocity(arm_cmd->arm.shoulder_velocity, PID_SLOT_VELOCITY);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    elbow_.setVelocity(arm_cmd->arm.elbow_velocity);
+    elbow_.setVelocity(arm_cmd->arm.elbow_velocity, PID_SLOT_VELOCITY);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_roll_.setVelocity(arm_cmd->arm.wrist_roll_velocity);
+    wrist_roll_.setVelocity(arm_cmd->arm.wrist_roll_velocity, PID_SLOT_VELOCITY);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_pitch_.setVelocity(arm_cmd->arm.wrist_pitch_velocity);
+    wrist_pitch_.setVelocity(arm_cmd->arm.wrist_pitch_velocity, PID_SLOT_VELOCITY);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
     return 0;

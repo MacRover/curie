@@ -79,22 +79,22 @@ int8_t hardware::SparkArmInterface::write(void* data)
         return -1;
     }
 
-    base_.setPosition(arm_cmd->arm.base_position);
+    base_.setPosition(arm_cmd->arm.base_position, PID_SLOT_POSITION);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    shoulder_.setPosition(arm_cmd->arm.shoulder_position);
+    shoulder_.setPosition(arm_cmd->arm.shoulder_position, PID_SLOT_POSITION);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    elbow_.setPosition(arm_cmd->arm.elbow_position);
+    elbow_.setPosition(arm_cmd->arm.elbow_position, PID_SLOT_POSITION);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_roll_.setPosition(arm_cmd->arm.wrist_roll_position);
+    wrist_roll_.setPosition(arm_cmd->arm.wrist_roll_position, PID_SLOT_POSITION);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_pitch_.setPosition(arm_cmd->arm.wrist_pitch_position);
+    wrist_pitch_.setPosition(arm_cmd->arm.wrist_pitch_position, PID_SLOT_POSITION);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    gripper_.setPosition(arm_cmd->arm.gripper_position);
+    gripper_.setPosition(arm_cmd->arm.gripper_position, PID_SLOT_POSITION);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
     return 0;

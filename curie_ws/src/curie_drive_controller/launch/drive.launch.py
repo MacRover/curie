@@ -39,7 +39,7 @@ def generate_launch_description():
                 [FindPackageShare("curie_drive_controller"), "config", "mock_diffbot.urdf.xacro"]
             ),
             " ",
-            "use_vcan:=",
+            "use_mock_hardware:=",
             use_mock_hardware,
         ]
     )
