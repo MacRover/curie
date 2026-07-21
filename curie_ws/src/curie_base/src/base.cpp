@@ -101,6 +101,8 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) :
         "joy1", 10, std::bind(&Basestation::_joy_arm_callback, this, std::placeholders::_1));
     arm_joint_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/arm_controller/vel_commands", 10);
     arm_servo_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/servo_node/delta_twist_cmds", 10);
+    arm_servo_joint_pub_ = this->create_publisher<control_msgs::msg::JointJog>("/servo_node/delta_joint_cmds", 10);
+    servo_joint_cmd_msg_.joint_names = {"wrist_pitch", "wrist_roll"};
 
     RCLCPP_INFO(this->get_logger(), "Basestation OK");
 }
@@ -130,11 +132,16 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
             servo_cmd_msg_.header.stamp = this->now();
             servo_cmd_msg_.header.frame_id = "base_link";
             servo_cmd_msg_.twist.linear.x = msg->axes[RIGHT_Y];
+            servo_cmd_msg_.twist.linear.y = msg->axes[RIGHT_X];
             servo_cmd_msg_.twist.linear.z = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
-            servo_cmd_msg_.twist.angular.x = msg->axes[LEFT_X] * -1.0;
-            servo_cmd_msg_.twist.angular.y = msg->axes[LEFT_Y] * -1.0;
+            // servo_cmd_msg_.twist.angular.x = msg->axes[LEFT_X] * -1.0;
+            // servo_cmd_msg_.twist.angular.y = msg->axes[LEFT_Y] * -1.0;
+            servo_joint_cmd_msg_.header.stamp = this->now();
+            servo_joint_cmd_msg_.header.frame_id = "base_link";
+            servo_joint_cmd_msg_.velocities = {msg->axes[LEFT_Y], msg->axes[LEFT_X]};
 
             arm_servo_pub_->publish(servo_cmd_msg_);
+            arm_servo_joint_pub_->publish(servo_joint_cmd_msg_);
             break;
         }
         case JOINT_VELOCITY:
