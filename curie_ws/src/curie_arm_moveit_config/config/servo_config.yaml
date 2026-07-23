@@ -57,7 +57,7 @@ joint_limit_margin: 0.1 # added as a buffer to joint limits [radians]. If moving
 leaving_singularity_threshold_multiplier: 2.0 # Multiply the hard stop limit by this when leaving singularity (see https://github.com/ros-planning/moveit2/pull/620)
 
 ## Topic names
-cartesian_command_in_topic: ~/delta_twist_cmds  # Topic for incoming Cartesian twist commands
+cartesian_command_in_topic: ~/delta_twist_corrected_cmds  # Topic for incoming Cartesian twist commands
 joint_command_in_topic: ~/delta_joint_cmds # Topic for incoming joint angle commands
 joint_topic: /joint_states
 status_topic: ~/status # Publish status to this topic
