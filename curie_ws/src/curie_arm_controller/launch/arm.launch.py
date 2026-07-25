@@ -8,7 +8,8 @@ from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 
-from launch_ros.actions import Node
+from launch_ros.actions import Node, ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -180,22 +181,61 @@ def generate_launch_description():
         )
     )
 
-    servo_node = Node(
-        package="moveit_servo",
-        executable="servo_node_main",
-        parameters=[
-            servo_params,
-            low_pass_filter_coeff,
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            moveit_config.robot_description_kinematics,
+    # servo_node = Node(
+    #     package="moveit_servo",
+    #     executable="servo_node_main",
+    #     parameters=[
+    #         servo_params,
+    #         low_pass_filter_coeff,
+    #         moveit_config.robot_description,
+    #         moveit_config.robot_description_semantic,
+    #         moveit_config.robot_description_kinematics,
+    #     ],
+    #     output="screen",
+    # )
+
+    servo_node_container = ComposableNodeContainer(
+        name="servo_node_container",
+        namespace="/",
+        package="rclcpp_components",
+        executable="component_container_mt",
+        composable_node_descriptions=[
+            ComposableNode(
+                package="curie_arm_servo",
+                plugin="ServoAntiDrifter",
+                name="antidrift_node",
+                parameters=[{
+                    "move_group_name": servo_yaml["move_group_name"],
+                    "joint_topic": servo_yaml["joint_topic"],
+                    "planning_frame": servo_yaml["planning_frame"],
+                    "ee_frame": servo_yaml["ee_frame_name"],
+                    "kP": servo_yaml["drift_kP"],
+                    "translation_dz": servo_yaml["translation_dz"],
+                    },
+                    moveit_config.robot_description,
+                    moveit_config.robot_description_semantic,
+                ],
+            ),
+            ComposableNode(
+                package="moveit_servo",
+                plugin="moveit_servo::ServoNode",
+                name="servo_node",
+                parameters=[
+                    servo_params,
+                    low_pass_filter_coeff,
+                    moveit_config.robot_description,
+                    moveit_config.robot_description_semantic,
+                    moveit_config.robot_description_kinematics,
+                ],
+                extra_arguments=[{'use_intra_process_comms' : True}]
+            ),
         ],
         output="screen",
     )
 
     enable_req_servo_node = RegisterEventHandler(
         event_handler=OnProcessStart(
-            target_action=servo_node,
+            target_action=servo_node_container,
             on_start=[
                 ExecuteProcess(
                     cmd=["ros2", "service", "call", "/servo_node/start_servo", "std_srvs/srv/Trigger", "{}"]
@@ -244,7 +284,8 @@ def generate_launch_description():
         control_node,
         heartbeat_node,
         spark_mock_handler,
-        servo_node,
+        # servo_node,
+        servo_node_container,
         enable_req_servo_node,
         joint_state_broadcaster_spawner,
         delay_arm_controller_spawner,

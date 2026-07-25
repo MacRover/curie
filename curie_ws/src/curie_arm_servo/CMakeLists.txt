@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
+find_package(moveit_ros_planning REQUIRED)
 
 add_library(antidrift_component SHARED src/servo_antidrift.cpp)
 ament_target_dependencies(
@@ -18,6 +19,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_components
   geometry_msgs
+  moveit_ros_planning
 )
 target_include_directories(antidrift_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
