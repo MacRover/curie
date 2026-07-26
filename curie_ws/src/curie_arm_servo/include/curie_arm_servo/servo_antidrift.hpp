@@ -13,8 +13,7 @@ public:
         return node_->get_node_base_interface();
     }
 private:
-    void _twist_callback(const geometry_msgs::msg::TwistStamped& msg);
-    void _robot_state_callback(void);
+    void _timer_callback(void);
 
     rclcpp::Node::SharedPtr node_;
     rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr twist_sub_;
@@ -23,12 +22,15 @@ private:
 
     std::shared_ptr<planning_scene_monitor::PlanningSceneMonitor> planning_scene_monitor_;
     moveit::core::RobotStatePtr current_state_;
-    geometry_msgs::msg::TwistStamped corrected_twist_msg_;
+    geometry_msgs::msg::TwistStamped latest_msg_;
 
-    double kP_;
+    bool enabled;
     double t_dz;
+    double pub_period_;
+    double timer_count_;
     std::string ee_frame;
     std::string planning_frame;
     std::string jmg_name;
-    Eigen::Vector3d tvec_eef_vel;
+    Eigen::RowVector3d tvec_err_int, tvec_err_prev;
+    Eigen::Matrix3d pid_gain_mat_;
 };

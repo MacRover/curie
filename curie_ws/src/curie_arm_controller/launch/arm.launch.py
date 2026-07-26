@@ -205,12 +205,30 @@ def generate_launch_description():
                 plugin="ServoAntiDrifter",
                 name="antidrift_node",
                 parameters=[{
+                    "antidrift_enable": servo_yaml["antidrift_enable"],
                     "move_group_name": servo_yaml["move_group_name"],
                     "joint_topic": servo_yaml["joint_topic"],
                     "planning_frame": servo_yaml["planning_frame"],
                     "ee_frame": servo_yaml["ee_frame_name"],
-                    "kP": servo_yaml["drift_kP"],
+                    "drift_axes": {
+                        "x": {
+                            "kP": servo_yaml["drift_axes"]["x"]["kP"],
+                            "kI": servo_yaml["drift_axes"]["x"]["kI"],
+                            "kD": servo_yaml["drift_axes"]["x"]["kD"]
+                        },
+                        "y": {
+                            "kP": servo_yaml["drift_axes"]["y"]["kP"],
+                            "kI": servo_yaml["drift_axes"]["y"]["kI"],
+                            "kD": servo_yaml["drift_axes"]["y"]["kD"]
+                        },
+                        "z": {
+                            "kP": servo_yaml["drift_axes"]["z"]["kP"],
+                            "kI": servo_yaml["drift_axes"]["z"]["kI"],
+                            "kD": servo_yaml["drift_axes"]["z"]["kD"]
+                        }
+                    },
                     "translation_dz": servo_yaml["translation_dz"],
+                    "publish_rate": 30.0
                     },
                     moveit_config.robot_description,
                     moveit_config.robot_description_semantic,

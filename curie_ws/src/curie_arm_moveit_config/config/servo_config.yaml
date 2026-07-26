@@ -70,5 +70,19 @@ self_collision_proximity_threshold: 0.01 # Start decelerating when a self-collis
 scene_collision_proximity_threshold: 0.02 # Start decelerating when a scene collision is this far [m]
 
 # Custom parameters for correcting servo drift in Cartesian mode
-drift_kP: 3.0
+antidrift_enable: true
+# Note, setting all PID terms to 0 on one axis effectively disables drift correction on that axis
+drift_axes: 
+  x: # PID gains for x-axis drift correction
+    kP: 3.0
+    kI: 0.5
+    kD: 0.1
+  y: # PID gains for y-axis drift correction
+    kP: 3.0
+    kI: 0.5
+    kD: 0.1
+  z: # PID gains for z-axis drift correction
+    kP: 6.0
+    kI: 0.7
+    kD: 0.2
 translation_dz: 0.05
