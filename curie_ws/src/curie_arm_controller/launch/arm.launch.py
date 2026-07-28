@@ -3,7 +3,7 @@ import yaml
 
 from ament_index_python import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, LogInfo, RegisterEventHandler, ExecuteProcess
+from launch.actions import DeclareLaunchArgument, LogInfo, RegisterEventHandler, ExecuteProcess, TimerAction
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
@@ -60,7 +60,7 @@ def generate_launch_description():
 
     servo_yaml = load_yaml("curie_arm_moveit_config", "config/servo_config.yaml")
     servo_params = {"moveit_servo": servo_yaml}
-    low_pass_filter_coeff = {"butterworth_filter_coeff": 3.0}
+    low_pass_filter_coeff = {"butterworth_filter_coeff": 70.0}
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -71,7 +71,7 @@ def generate_launch_description():
                 [FindPackageShare("curie_arm_moveit_config"), "config", "arm.urdf.xacro"]
             ),
             " ",
-            "use_vcan:=",
+            "use_mock_hardware:=",
             use_mock_hardware,
         ],
         on_stderr="ignore"
@@ -117,15 +117,6 @@ def generate_launch_description():
         ],
     )
 
-    heartbeat_node = Node(
-        package="curie_hw_control",
-        executable="sparkmax_heartbeat",
-        output="both",
-        parameters=[{
-            "use_vcan": use_mock_hardware
-        }]
-    )
-
     spark_mock_handler = ExecuteProcess(
         cmd=[
             "spark_mock_runner.py", 
@@ -142,6 +133,25 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+    )
+
+    heartbeat_node = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=TimerAction(
+                period=5.0,
+                actions=[
+                    Node(
+                        package="curie_hw_control",
+                        executable="sparkmax_heartbeat",
+                        output="both",
+                        parameters=[{
+                            "use_vcan": use_mock_hardware
+                        }]
+                    )
+                ]
+            )
+        )
     )
 
     delay_arm_controller_spawner = RegisterEventHandler(

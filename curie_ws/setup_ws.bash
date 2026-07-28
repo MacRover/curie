@@ -5,7 +5,7 @@ BIN_PATH="src/curie_hw_control/lib/spark_mmrt/bin"
 
 # One time setup
 if [[ "$PATH" != *"$SOURCE_DIR/$BIN_PATH"* ]]; then
-    sudo apt update && sudo apt install python3-rosdep -y
+    sudo apt update && sudo apt install python3-rosdep libncurses5-dev libncursesw5-dev ros-humble-cyclonedds ros-humble-rmw-cyclonedds-cpp -y
     sudo rosdep init
     rosdep update
     rosdep install --from-paths $SOURCE_DIR/src --ignore-src -y

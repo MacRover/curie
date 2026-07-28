@@ -24,6 +24,12 @@ typedef enum : uint8_t
     BACK_RIGHT = (SPARK_DRIVETRAIN << 4) | 6
 } SparkDriveID;
 
+typedef enum : uint8_t
+{
+    PID_SLOT_POSITION = 0,
+    PID_SLOT_VELOCITY = 1,
+} SparkPIDSlot;
+
 typedef union __spark_command
 {  
     struct __DriveCommand
