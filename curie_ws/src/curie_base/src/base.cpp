@@ -60,8 +60,8 @@ base::Basestation::Basestation(const rclcpp::NodeOptions & options) :
     this->declare_parameter("arm.max_elbow_angular_speed", 1.0);
     this->declare_parameter("arm.max_pitch_angular_speed", 1.0);
     this->declare_parameter("arm.max_roll_angular_speed", 1.0);
-    this->declare_parameter("gripper.open_position", 0.5); // Test Value
-    this->declare_parameter("gripper.close_position", 0.0); // Test Value
+    this->declare_parameter("gripper.open_position", 0.0); // Test Value
+    this->declare_parameter("gripper.close_position", 1.57); // Test Value
     this->declare_parameter("gripper.max_effort", 1.0);
 
     this->declare_parameter("arm.servoing", false);
@@ -308,6 +308,7 @@ void base::Basestation::_send_gripper_hold_goal(double hold_position){
         RCLCPP_INFO(this->get_logger(), "Hold goal accepted, sending cancel request");
 
         gripper_client_->async_cancel_goal(goal_handle, [this](auto cancel_response){
+            gripper_request_active = false;
             if (cancel_response->goals_canceling.empty()){
                 RCLCPP_WARN(this->get_logger(), "Hold goal completed before cancellation");
                 return;
