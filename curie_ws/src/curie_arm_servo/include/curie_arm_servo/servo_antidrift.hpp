@@ -22,15 +22,20 @@ private:
 
     std::shared_ptr<planning_scene_monitor::PlanningSceneMonitor> planning_scene_monitor_;
     moveit::core::RobotStatePtr current_state_;
-    geometry_msgs::msg::TwistStamped latest_msg_;
+    geometry_msgs::msg::TwistStamped latest_msg_, prev_msg_;
 
-    bool enabled;
+    bool enabled, state_changed;
     double t_dz;
     double pub_period_;
     double timer_count_;
+    double pos_refresh_count_;
+    double min_x, min_y, min_z;
+    double max_x, max_y, max_z;
     std::string ee_frame;
     std::string planning_frame;
     std::string jmg_name;
     Eigen::RowVector3d tvec_err_int, tvec_err_prev;
     Eigen::Matrix3d pid_gain_mat_;
+    Eigen::Vector3d projected_eef_pos_;
+    double eef_term_speed_;
 };

@@ -74,15 +74,15 @@ antidrift_enable: true
 # Note, setting all PID terms to 0 on one axis effectively disables drift correction on that axis
 drift_axes: 
   x: # PID gains for x-axis drift correction
-    kP: 3.0
-    kI: 0.5
-    kD: 0.1
+    kP: 30.0
+    pid_min: -1.0
+    pid_max: 1.0
   y: # PID gains for y-axis drift correction
-    kP: 3.0
-    kI: 0.5
-    kD: 0.1
+    kP: 0.0
+    pid_min: -1.0
+    pid_max: 1.0
   z: # PID gains for z-axis drift correction
-    kP: 6.0
-    kI: 0.7
-    kD: 0.2
+    kP: 30.0
+    pid_min: -1.0
+    pid_max: 1.0
 translation_dz: 0.05

@@ -213,22 +213,22 @@ def generate_launch_description():
                     "drift_axes": {
                         "x": {
                             "kP": servo_yaml["drift_axes"]["x"]["kP"],
-                            "kI": servo_yaml["drift_axes"]["x"]["kI"],
-                            "kD": servo_yaml["drift_axes"]["x"]["kD"]
+                            "pid_min": servo_yaml["drift_axes"]["x"]["pid_min"],
+                            "pid_max": servo_yaml["drift_axes"]["x"]["pid_max"]
                         },
                         "y": {
                             "kP": servo_yaml["drift_axes"]["y"]["kP"],
-                            "kI": servo_yaml["drift_axes"]["y"]["kI"],
-                            "kD": servo_yaml["drift_axes"]["y"]["kD"]
+                            "pid_min": servo_yaml["drift_axes"]["y"]["pid_min"],
+                            "pid_max": servo_yaml["drift_axes"]["y"]["pid_max"]
                         },
                         "z": {
                             "kP": servo_yaml["drift_axes"]["z"]["kP"],
-                            "kI": servo_yaml["drift_axes"]["z"]["kI"],
-                            "kD": servo_yaml["drift_axes"]["z"]["kD"]
+                            "pid_min": servo_yaml["drift_axes"]["z"]["pid_min"],
+                            "pid_max": servo_yaml["drift_axes"]["z"]["pid_max"]
                         }
                     },
                     "translation_dz": servo_yaml["translation_dz"],
-                    "publish_rate": 30.0
+                    "publish_rate": 40.0
                     },
                     moveit_config.robot_description,
                     moveit_config.robot_description_semantic,

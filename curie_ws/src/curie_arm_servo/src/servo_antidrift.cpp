@@ -2,7 +2,12 @@
 
 ServoAntiDrifter::ServoAntiDrifter(const rclcpp::NodeOptions & options) : 
     node_{std::make_shared<rclcpp::Node>("servo_antidrift", options)},
-    timer_count_{0.0}
+    state_changed(true),
+    timer_count_(0.0),
+    pos_refresh_count_(0.0),
+    tvec_err_int{Eigen::Vector3d::Zero()},
+    tvec_err_prev{Eigen::Vector3d::Zero()},
+    projected_eef_pos_{Eigen::Vector3d::Zero()}
 {
     node_->declare_parameter("move_group_name", "arm");
     node_->declare_parameter("joint_topic", "/joint_states");
@@ -11,6 +16,13 @@ ServoAntiDrifter::ServoAntiDrifter(const rclcpp::NodeOptions & options) :
     node_->declare_parameter("translation_dz", 0.0);
     node_->declare_parameter("publish_rate", 20.0);
     node_->declare_parameter("antidrift_enable", false);
+
+    node_->declare_parameter("drift_axes.x.pid_min", -1.0);
+    node_->declare_parameter("drift_axes.x.pid_max", 1.0);
+    node_->declare_parameter("drift_axes.y.pid_min", -1.0);
+    node_->declare_parameter("drift_axes.y.pid_max", 1.0);
+    node_->declare_parameter("drift_axes.z.pid_min", -1.0);
+    node_->declare_parameter("drift_axes.z.pid_max", 1.0);
 
     node_->declare_parameter("drift_axes.x.kP", 0.0);
     node_->declare_parameter("drift_axes.x.kI", 0.0);
@@ -21,6 +33,9 @@ ServoAntiDrifter::ServoAntiDrifter(const rclcpp::NodeOptions & options) :
     node_->declare_parameter("drift_axes.z.kP", 0.0);
     node_->declare_parameter("drift_axes.z.kI", 0.0);
     node_->declare_parameter("drift_axes.z.kD", 0.0);
+
+    node_->declare_parameter("eef_max_speed", 0.2);
+    eef_term_speed_ = node_->get_parameter("eef_max_speed").as_double();
 
     double kP, kI, kD;
     kP = node_->get_parameter("drift_axes.x.kP").as_double();
@@ -35,6 +50,13 @@ ServoAntiDrifter::ServoAntiDrifter(const rclcpp::NodeOptions & options) :
     kI = node_->get_parameter("drift_axes.z.kI").as_double();
     kD = node_->get_parameter("drift_axes.z.kD").as_double();
     pid_gain_mat_.row(2) << kP, kI, kD;
+
+    min_x = node_->get_parameter("drift_axes.x.pid_min").as_double();
+    max_x = node_->get_parameter("drift_axes.x.pid_max").as_double();
+    min_y = node_->get_parameter("drift_axes.y.pid_min").as_double();
+    max_y = node_->get_parameter("drift_axes.y.pid_max").as_double();
+    min_z = node_->get_parameter("drift_axes.z.pid_min").as_double();
+    max_z = node_->get_parameter("drift_axes.z.pid_max").as_double();
 
     enabled = node_->get_parameter("antidrift_enable").as_bool();
     jmg_name = node_->get_parameter("move_group_name").as_string();
@@ -64,9 +86,6 @@ ServoAntiDrifter::ServoAntiDrifter(const rclcpp::NodeOptions & options) :
     twist_pub_ = node_->create_publisher<geometry_msgs::msg::TwistStamped>(
         "/servo_node/delta_twist_corrected_cmds", 10);
     
-    tvec_err_int = Eigen::Vector3d::Zero();
-    tvec_err_prev = Eigen::Vector3d::Zero();
-    
     pub_period_ = 1.0 / node_->get_parameter("publish_rate").as_double();
     timer_ = node_->create_wall_timer(
         std::chrono::milliseconds((uint32_t)(pub_period_ * 1000.0)),
@@ -84,10 +103,23 @@ void ServoAntiDrifter::_timer_callback(void)
     if (!enabled || (latest_msg_.twist.linear.x == 0.0 && latest_msg_.twist.linear.y == 0.0 && latest_msg_.twist.linear.z == 0.0))
     {
         twist_pub_->publish(latest_msg_);
+        state_changed = true;
         return;
     }
+    else if ((latest_msg_.twist.linear.x == 0.0 && prev_msg_.twist.linear.x != 0.0) ||
+            (latest_msg_.twist.linear.y == 0.0 && prev_msg_.twist.linear.y != 0.0) ||
+            (latest_msg_.twist.linear.z == 0.0 && prev_msg_.twist.linear.z != 0.0))
+    {
+        state_changed = true;
+    }
 
+    prev_msg_ = latest_msg_;
     current_state_ = planning_scene_monitor_->getStateMonitor()->getCurrentState();
+    if (state_changed)
+    {
+        state_changed = false;
+        projected_eef_pos_ = current_state_->getGlobalLinkTransform(ee_frame).translation();
+    }
     Eigen::Vector3d tvec_cmd_vel{latest_msg_.twist.linear.x, latest_msg_.twist.linear.y, latest_msg_.twist.linear.z};
     Eigen::Vector3d rvec_cmd_vel{latest_msg_.twist.angular.x, latest_msg_.twist.angular.y, latest_msg_.twist.angular.z};
 
@@ -98,17 +130,26 @@ void ServoAntiDrifter::_timer_callback(void)
     tvec_cmd_vel = cmd_to_planning_frame_transform * tvec_cmd_vel;
     rvec_cmd_vel = cmd_to_planning_frame_transform * rvec_cmd_vel;
 
-    if (std::abs(tvec_cmd_vel.x()) < t_dz) tvec_cmd_vel.x() = 0.0;
-    if (std::abs(tvec_cmd_vel.y()) < t_dz) tvec_cmd_vel.y() = 0.0;
-    if (std::abs(tvec_cmd_vel.z()) < t_dz) tvec_cmd_vel.z() = 0.0;
-
     Eigen::VectorXd q_dot;
     current_state_->copyJointGroupVelocities(jmg_name, q_dot);
     const Eigen::MatrixXd jacobian = current_state_->getJacobian(current_state_->getJointModelGroup(jmg_name));
-    Eigen::VectorXd tvec_eef_norm = (jacobian * q_dot).normalized();
+    Eigen::Matrix3d tvec_eef_vel = (jacobian * q_dot).topRows<3>().asDiagonal();
+
+    // Assuming commands are unitless:
+    projected_eef_pos_ += tvec_eef_vel * tvec_cmd_vel * pub_period_;
+    pos_refresh_count_ += pub_period_;
 
     // Next up, construct the error matrix and apply the PID gains
-    Eigen::RowVector3d tvec_error = (tvec_cmd_vel.normalized() - tvec_eef_norm.topRows<3>()).transpose();
+    Eigen::Vector3d current_eef_pos = current_state_->getGlobalLinkTransform(ee_frame).translation();
+    if (pos_refresh_count_ >= 0.1)
+    {
+        pos_refresh_count_ = 0.0;
+        if (tvec_cmd_vel.x() != 0.0) projected_eef_pos_.x() = current_eef_pos.x();
+        if (tvec_cmd_vel.y() != 0.0) projected_eef_pos_.y() = current_eef_pos.y();
+        if (tvec_cmd_vel.z() != 0.0) projected_eef_pos_.z() = current_eef_pos.z();
+    }
+
+    Eigen::RowVector3d tvec_error = (projected_eef_pos_ - current_eef_pos).transpose();
     tvec_err_int += tvec_error * pub_period_;
     Eigen::RowVector3d tvec_err_deriv = (tvec_error - tvec_err_prev) / pub_period_;
     tvec_err_prev = tvec_error;
@@ -116,7 +157,12 @@ void ServoAntiDrifter::_timer_callback(void)
     matrix_err << tvec_error, tvec_err_int, tvec_err_deriv;
 
     // The values we care for are on the diagonal
-    Eigen::Vector3d corrected_tvec = tvec_cmd_vel + (pid_gain_mat_ * matrix_err).diagonal();
+    Eigen::Vector3d pid_output_ = (pid_gain_mat_ * matrix_err).diagonal();
+    pid_output_.x() = std::clamp(pid_output_.x(), min_x, max_x);
+    pid_output_.y() = std::clamp(pid_output_.y(), min_y, max_y);
+    pid_output_.z() = std::clamp(pid_output_.z(), min_z, max_z);
+    Eigen::Vector3d corrected_tvec = tvec_cmd_vel + pid_output_;
+
     geometry_msgs::msg::TwistStamped corrected_twist_msg_;
     corrected_twist_msg_.header.stamp = latest_msg_.header.stamp;
     corrected_twist_msg_.header.frame_id = planning_frame;
