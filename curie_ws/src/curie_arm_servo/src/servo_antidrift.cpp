@@ -106,29 +106,29 @@ void ServoAntiDrifter::_timer_callback(void)
         state_changed = true;
         return;
     }
-    else if ((latest_msg_.twist.linear.x == 0.0 && prev_msg_.twist.linear.x != 0.0) ||
-            (latest_msg_.twist.linear.y == 0.0 && prev_msg_.twist.linear.y != 0.0) ||
-            (latest_msg_.twist.linear.z == 0.0 && prev_msg_.twist.linear.z != 0.0))
+    else if ((std::abs(latest_msg_.twist.linear.x) < t_dz && std::abs(latest_msg_.twist.linear.x) >= t_dz) ||
+            (std::abs(latest_msg_.twist.linear.y) < t_dz && std::abs(latest_msg_.twist.linear.y) >= t_dz) ||
+            (std::abs(latest_msg_.twist.linear.z) < t_dz && std::abs(latest_msg_.twist.linear.z) >= t_dz))
     {
         state_changed = true;
     }
 
     prev_msg_ = latest_msg_;
     current_state_ = planning_scene_monitor_->getStateMonitor()->getCurrentState();
+    const Eigen::Matrix3d planning_to_cmd_frame_transform = (
+        current_state_->getGlobalLinkTransform(latest_msg_.header.frame_id).inverse() * 
+        current_state_->getGlobalLinkTransform(planning_frame)
+    ).linear();
+
+    Eigen::Vector3d eef_pos_cmd_frame = planning_to_cmd_frame_transform * current_state_->getGlobalLinkTransform(ee_frame).translation();
+
     if (state_changed)
     {
         state_changed = false;
-        projected_eef_pos_ = current_state_->getGlobalLinkTransform(ee_frame).translation();
+        projected_eef_pos_ = eef_pos_cmd_frame;
     }
     Eigen::Vector3d tvec_cmd_vel{latest_msg_.twist.linear.x, latest_msg_.twist.linear.y, latest_msg_.twist.linear.z};
     Eigen::Vector3d rvec_cmd_vel{latest_msg_.twist.angular.x, latest_msg_.twist.angular.y, latest_msg_.twist.angular.z};
-
-    const Eigen::Matrix3d cmd_to_planning_frame_transform = (
-        current_state_->getGlobalLinkTransform(planning_frame).inverse() * 
-        current_state_->getGlobalLinkTransform(latest_msg_.header.frame_id)
-    ).linear();
-    tvec_cmd_vel = cmd_to_planning_frame_transform * tvec_cmd_vel;
-    rvec_cmd_vel = cmd_to_planning_frame_transform * rvec_cmd_vel;
 
     Eigen::VectorXd q_dot;
     current_state_->copyJointGroupVelocities(jmg_name, q_dot);
@@ -140,7 +140,7 @@ void ServoAntiDrifter::_timer_callback(void)
     pos_refresh_count_ += pub_period_;
 
     // Next up, construct the error matrix and apply the PID gains
-    Eigen::Vector3d current_eef_pos = current_state_->getGlobalLinkTransform(ee_frame).translation();
+    Eigen::Vector3d current_eef_pos = eef_pos_cmd_frame;
     if (pos_refresh_count_ >= 0.1)
     {
         pos_refresh_count_ = 0.0;
@@ -148,6 +148,10 @@ void ServoAntiDrifter::_timer_callback(void)
         if (tvec_cmd_vel.y() != 0.0) projected_eef_pos_.y() = current_eef_pos.y();
         if (tvec_cmd_vel.z() != 0.0) projected_eef_pos_.z() = current_eef_pos.z();
     }
+
+    // RCLCPP_INFO(node_->get_logger(), "Current EEF Pos: [%.3f, %.3f, %.3f], Projected EEF Pos: [%.3f, %.3f, %.3f]",
+    //     current_eef_pos.x(), current_eef_pos.y(), current_eef_pos.z(),
+    //     projected_eef_pos_.x(), projected_eef_pos_.y(), projected_eef_pos_.z());
 
     Eigen::RowVector3d tvec_error = (projected_eef_pos_ - current_eef_pos).transpose();
     tvec_err_int += tvec_error * pub_period_;
@@ -164,8 +168,7 @@ void ServoAntiDrifter::_timer_callback(void)
     Eigen::Vector3d corrected_tvec = tvec_cmd_vel + pid_output_;
 
     geometry_msgs::msg::TwistStamped corrected_twist_msg_;
-    corrected_twist_msg_.header.stamp = latest_msg_.header.stamp;
-    corrected_twist_msg_.header.frame_id = planning_frame;
+    corrected_twist_msg_.header = latest_msg_.header;
     corrected_twist_msg_.twist.linear.x = std::clamp(corrected_tvec.x(), -1.0, 1.0);
     corrected_twist_msg_.twist.linear.y = std::clamp(corrected_tvec.y(), -1.0, 1.0);
     corrected_twist_msg_.twist.linear.z = std::clamp(corrected_tvec.z(), -1.0, 1.0);

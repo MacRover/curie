@@ -130,9 +130,9 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
         case SERVO:
         {
             servo_cmd_msg_.header.stamp = this->now();
-            servo_cmd_msg_.header.frame_id = "base_link";
-            servo_cmd_msg_.twist.linear.x = msg->axes[RIGHT_Y];
-            servo_cmd_msg_.twist.linear.y = msg->axes[RIGHT_X];
+            servo_cmd_msg_.header.frame_id = "endeffector_link";
+            servo_cmd_msg_.twist.linear.x = msg->axes[RIGHT_X] * -1.0;
+            servo_cmd_msg_.twist.linear.y = msg->axes[RIGHT_Y];
             servo_cmd_msg_.twist.linear.z = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
             // servo_cmd_msg_.twist.angular.x = msg->axes[LEFT_X] * -1.0;
             // servo_cmd_msg_.twist.angular.y = msg->axes[LEFT_Y] * -1.0;
