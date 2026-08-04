@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cmath>
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -35,7 +36,9 @@ private:
     std::string planning_frame;
     std::string jmg_name;
     Eigen::RowVector3d tvec_err_int, tvec_err_prev;
-    Eigen::Matrix3d pid_gain_mat_;
     Eigen::Vector3d projected_eef_pos_;
+    Eigen::Quaterniond projected_eef_rot_;
+    Eigen::Matrix3d pid_gain_pmat_;
+    Eigen::Vector3d pid_gain_rmat_;
     double eef_term_speed_;
 };

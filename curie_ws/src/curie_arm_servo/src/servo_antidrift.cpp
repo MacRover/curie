@@ -24,32 +24,42 @@ ServoAntiDrifter::ServoAntiDrifter(const rclcpp::NodeOptions & options) :
     node_->declare_parameter("drift_axes.z.pid_min", -1.0);
     node_->declare_parameter("drift_axes.z.pid_max", 1.0);
 
-    node_->declare_parameter("drift_axes.x.kP", 0.0);
-    node_->declare_parameter("drift_axes.x.kI", 0.0);
-    node_->declare_parameter("drift_axes.x.kD", 0.0);
-    node_->declare_parameter("drift_axes.y.kP", 0.0);
-    node_->declare_parameter("drift_axes.y.kI", 0.0);
-    node_->declare_parameter("drift_axes.y.kD", 0.0);
-    node_->declare_parameter("drift_axes.z.kP", 0.0);
-    node_->declare_parameter("drift_axes.z.kI", 0.0);
-    node_->declare_parameter("drift_axes.z.kD", 0.0);
+    node_->declare_parameter("drift_axes.x.linear_kP", 0.0);
+    node_->declare_parameter("drift_axes.x.linear_kI", 0.0);
+    node_->declare_parameter("drift_axes.x.linear_kD", 0.0);
+    node_->declare_parameter("drift_axes.y.linear_kP", 0.0);
+    node_->declare_parameter("drift_axes.y.linear_kI", 0.0);
+    node_->declare_parameter("drift_axes.y.linear_kD", 0.0);
+    node_->declare_parameter("drift_axes.z.linear_kP", 0.0);
+    node_->declare_parameter("drift_axes.z.linear_kI", 0.0);
+    node_->declare_parameter("drift_axes.z.linear_kD", 0.0);
+    node_->declare_parameter("drift_axes.x.euler_kP", 0.0);
+    node_->declare_parameter("drift_axes.y.euler_kP", 0.0);
+    node_->declare_parameter("drift_axes.z.euler_kP", 0.0);
 
     node_->declare_parameter("eef_max_speed", 0.2);
     eef_term_speed_ = node_->get_parameter("eef_max_speed").as_double();
 
     double kP, kI, kD;
-    kP = node_->get_parameter("drift_axes.x.kP").as_double();
-    kI = node_->get_parameter("drift_axes.x.kI").as_double();
-    kD = node_->get_parameter("drift_axes.x.kD").as_double();
-    pid_gain_mat_.row(0) << kP, kI, kD;
-    kP = node_->get_parameter("drift_axes.y.kP").as_double();
-    kI = node_->get_parameter("drift_axes.y.kI").as_double();
-    kD = node_->get_parameter("drift_axes.y.kD").as_double();
-    pid_gain_mat_.row(1) << kP, kI, kD;
-    kP = node_->get_parameter("drift_axes.z.kP").as_double();
-    kI = node_->get_parameter("drift_axes.z.kI").as_double();
-    kD = node_->get_parameter("drift_axes.z.kD").as_double();
-    pid_gain_mat_.row(2) << kP, kI, kD;
+    kP = node_->get_parameter("drift_axes.x.linear_kP").as_double();
+    kI = node_->get_parameter("drift_axes.x.linear_kI").as_double();
+    kD = node_->get_parameter("drift_axes.x.linear_kD").as_double();
+    pid_gain_pmat_.row(0) << kP, kI, kD;
+    kP = node_->get_parameter("drift_axes.y.linear_kP").as_double();
+    kI = node_->get_parameter("drift_axes.y.linear_kI").as_double();
+    kD = node_->get_parameter("drift_axes.y.linear_kD").as_double();
+    pid_gain_pmat_.row(1) << kP, kI, kD;
+    kP = node_->get_parameter("drift_axes.z.linear_kP").as_double();
+    kI = node_->get_parameter("drift_axes.z.linear_kI").as_double();
+    kD = node_->get_parameter("drift_axes.z.linear_kD").as_double();
+    pid_gain_pmat_.row(2) << kP, kI, kD;
+
+    kP = node_->get_parameter("drift_axes.x.euler_kP").as_double();
+    pid_gain_rmat_.x() = kP;
+    kP = node_->get_parameter("drift_axes.y.euler_kP").as_double();
+    pid_gain_rmat_.y() = kP;
+    kP = node_->get_parameter("drift_axes.z.euler_kP").as_double();
+    pid_gain_rmat_.z() = kP;
 
     min_x = node_->get_parameter("drift_axes.x.pid_min").as_double();
     max_x = node_->get_parameter("drift_axes.x.pid_max").as_double();
@@ -121,11 +131,13 @@ void ServoAntiDrifter::_timer_callback(void)
     ).linear();
 
     Eigen::Vector3d eef_pos_cmd_frame = planning_to_cmd_frame_transform * current_state_->getGlobalLinkTransform(ee_frame).translation();
-
+    Eigen::Quaterniond eef_rot_cmd_frame(current_state_->getGlobalLinkTransform(ee_frame).linear());
     if (state_changed)
     {
         state_changed = false;
         projected_eef_pos_ = eef_pos_cmd_frame;
+        projected_eef_rot_ = eef_rot_cmd_frame;
+        tvec_err_int = Eigen::RowVector3d::Zero();
     }
     Eigen::Vector3d tvec_cmd_vel{latest_msg_.twist.linear.x, latest_msg_.twist.linear.y, latest_msg_.twist.linear.z};
     Eigen::Vector3d rvec_cmd_vel{latest_msg_.twist.angular.x, latest_msg_.twist.angular.y, latest_msg_.twist.angular.z};
@@ -139,7 +151,6 @@ void ServoAntiDrifter::_timer_callback(void)
     projected_eef_pos_ += tvec_eef_vel * tvec_cmd_vel * pub_period_;
     pos_refresh_count_ += pub_period_;
 
-    // Next up, construct the error matrix and apply the PID gains
     Eigen::Vector3d current_eef_pos = eef_pos_cmd_frame;
     if (pos_refresh_count_ >= 0.1)
     {
@@ -149,10 +160,7 @@ void ServoAntiDrifter::_timer_callback(void)
         if (tvec_cmd_vel.z() != 0.0) projected_eef_pos_.z() = current_eef_pos.z();
     }
 
-    // RCLCPP_INFO(node_->get_logger(), "Current EEF Pos: [%.3f, %.3f, %.3f], Projected EEF Pos: [%.3f, %.3f, %.3f]",
-    //     current_eef_pos.x(), current_eef_pos.y(), current_eef_pos.z(),
-    //     projected_eef_pos_.x(), projected_eef_pos_.y(), projected_eef_pos_.z());
-
+    // Next up, construct the error matrix and apply the PID gains
     Eigen::RowVector3d tvec_error = (projected_eef_pos_ - current_eef_pos).transpose();
     tvec_err_int += tvec_error * pub_period_;
     Eigen::RowVector3d tvec_err_deriv = (tvec_error - tvec_err_prev) / pub_period_;
@@ -160,21 +168,43 @@ void ServoAntiDrifter::_timer_callback(void)
     Eigen::Matrix3d matrix_err;
     matrix_err << tvec_error, tvec_err_int, tvec_err_deriv;
 
+    Eigen::Quaternion q_error = projected_eef_rot_ * eef_rot_cmd_frame.conjugate();
+    if (q_error.w() < 0.0)
+    {
+        q_error.coeffs() *= -1.0;
+    }
+    Eigen::Vector3d rvec_error = 2 * atan(q_error.vec().norm() / q_error.w()) * q_error.vec().normalized();
+    double temp_x, temp_y, temp_z;
+    temp_x = rvec_error.x();
+    temp_y = rvec_error.y();
+    temp_z = rvec_error.z();
+    rvec_error.x() = -temp_y;
+    rvec_error.y() = -temp_x;
+    rvec_error.z() = temp_z;
+    
+    // RCLCPP_INFO(node_->get_logger(), "tvec_error: [%f, %f, %f], rvec_error: [%f, %f, %f]", 
+    //             tvec_error.x(), tvec_error.y(), tvec_error.z(), rvec_error.x(), rvec_error.y(), rvec_error.z());
+
     // The values we care for are on the diagonal
-    Eigen::Vector3d pid_output_ = (pid_gain_mat_ * matrix_err).diagonal();
+    Eigen::Vector3d pid_output_ = (pid_gain_pmat_ * matrix_err).diagonal();
+    Eigen::Vector3d pid_r_output_ = pid_gain_rmat_.cwiseProduct(rvec_error);
     pid_output_.x() = std::clamp(pid_output_.x(), min_x, max_x);
     pid_output_.y() = std::clamp(pid_output_.y(), min_y, max_y);
     pid_output_.z() = std::clamp(pid_output_.z(), min_z, max_z);
+    pid_r_output_.x() = std::clamp(pid_r_output_.x(), min_x, max_x);
+    pid_r_output_.y() = std::clamp(pid_r_output_.y(), min_y, max_y);
+    pid_r_output_.z() = std::clamp(pid_r_output_.z(), min_z, max_z);
     Eigen::Vector3d corrected_tvec = tvec_cmd_vel + pid_output_;
+    Eigen::Vector3d corrected_rvec = rvec_cmd_vel + pid_r_output_;
 
     geometry_msgs::msg::TwistStamped corrected_twist_msg_;
     corrected_twist_msg_.header = latest_msg_.header;
     corrected_twist_msg_.twist.linear.x = std::clamp(corrected_tvec.x(), -1.0, 1.0);
     corrected_twist_msg_.twist.linear.y = std::clamp(corrected_tvec.y(), -1.0, 1.0);
     corrected_twist_msg_.twist.linear.z = std::clamp(corrected_tvec.z(), -1.0, 1.0);
-    corrected_twist_msg_.twist.angular.x = rvec_cmd_vel.x();
-    corrected_twist_msg_.twist.angular.y = rvec_cmd_vel.y();
-    corrected_twist_msg_.twist.angular.z = rvec_cmd_vel.z();
+    corrected_twist_msg_.twist.angular.x = std::clamp(corrected_rvec.x(), -1.0, 1.0);
+    corrected_twist_msg_.twist.angular.y = std::clamp(corrected_rvec.y(), -1.0, 1.0);
+    corrected_twist_msg_.twist.angular.z = std::clamp(corrected_rvec.z(), -1.0, 1.0);
     twist_pub_->publish(corrected_twist_msg_);
 }
 

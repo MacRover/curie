@@ -212,17 +212,26 @@ def generate_launch_description():
                     "ee_frame": servo_yaml["ee_frame_name"],
                     "drift_axes": {
                         "x": {
-                            "kP": servo_yaml["drift_axes"]["x"]["kP"],
+                            "linear_kP": servo_yaml["drift_axes"]["x"]["linear_kP"],
+                            "euler_kP": servo_yaml["drift_axes"]["x"]["euler_kP"],
+                            "linear_kI": 0.0,
+                            "linear_kD": 0.0,
                             "pid_min": servo_yaml["drift_axes"]["x"]["pid_min"],
                             "pid_max": servo_yaml["drift_axes"]["x"]["pid_max"]
                         },
                         "y": {
-                            "kP": servo_yaml["drift_axes"]["y"]["kP"],
+                            "linear_kP": servo_yaml["drift_axes"]["y"]["linear_kP"],
+                            "euler_kP": servo_yaml["drift_axes"]["y"]["euler_kP"],
+                            "linear_kI": 0.0,
+                            "linear_kD": 0.0,
                             "pid_min": servo_yaml["drift_axes"]["y"]["pid_min"],
                             "pid_max": servo_yaml["drift_axes"]["y"]["pid_max"]
                         },
                         "z": {
-                            "kP": servo_yaml["drift_axes"]["z"]["kP"],
+                            "linear_kP": servo_yaml["drift_axes"]["z"]["linear_kP"],
+                            "euler_kP": servo_yaml["drift_axes"]["z"]["euler_kP"],
+                            "linear_kI": 0.0,
+                            "linear_kD": 0.0,
                             "pid_min": servo_yaml["drift_axes"]["z"]["pid_min"],
                             "pid_max": servo_yaml["drift_axes"]["z"]["pid_max"]
                         }
