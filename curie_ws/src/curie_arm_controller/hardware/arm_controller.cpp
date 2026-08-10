@@ -19,14 +19,44 @@ hardware_interface::CallbackReturn CurieArmController::on_init(
     std::string use_vcan_hw_param = info_.hardware_parameters["use_vcan"];
     std::transform(use_vcan_hw_param.begin(), use_vcan_hw_param.end(), use_vcan_hw_param.begin(), ::tolower);
     std::istringstream(use_vcan_hw_param) >> std::boolalpha >> use_vcan_interface;
-    if (arm_hardware_.initialize(&use_vcan_interface) < 0)
-    {
-        return hardware_interface::CallbackReturn::ERROR;
-    }
-    if (arm_vel_hardware_.initialize(&use_vcan_interface) < 0)
-    {
-        return hardware_interface::CallbackReturn::ERROR;
-    }
+
+    RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "Virtual CAN is %s. Using CAN interface '%s'.",
+        use_vcan_interface ? "enabled" : "disabled",
+        use_vcan_interface ? "vcan0" : "can0"
+    );
+
+int8_t arm_init_result = arm_hardware_.initialize(&use_vcan_interface);
+
+if (arm_init_result == static_cast<int8_t>(hardware::SparkArmInitResult::CAN_OPEN_ERROR)){
+    RCLCPP_ERROR(rclcpp::get_logger("ArmSystem"), "Failed to open CAN interface '%s'.", use_vcan_interface ? "vcan0" : "can0");
+
+    return hardware_interface::CallbackReturn::ERROR;
+}
+
+if (arm_init_result == static_cast<int8_t>(hardware::SparkArmInitResult::DEVICE_COMMUNICATION_ERROR)){
+    RCLCPP_ERROR(
+        rclcpp::get_logger("ArmSystem"),
+        "CAN interface opened, but communication with one or more "
+        "arm devices failed during initialization."
+    );
+
+    return hardware_interface::CallbackReturn::ERROR;
+}
+
+int8_t arm_vel_init_result = arm_vel_hardware_.initialize(&use_vcan_interface);
+
+if (arm_vel_init_result < 0){
+    
+    RCLCPP_ERROR(
+        rclcpp::get_logger("ArmSystem"),
+        "Failed to initialize arm velocity hardware on CAN interface '%s'.",
+        use_vcan_interface ? "vcan0" : "can0"
+    );
+
+    return hardware_interface::CallbackReturn::ERROR;
+}
     arm_hw_thread_ = std::thread(&hardware::SparkArmInterface::run, &arm_hardware_);
     joint_velocities_.resize(info_.joints.size(), 0.0);
     joint_positions_.resize(info_.joints.size(), 0.0);
@@ -99,12 +129,12 @@ hardware_interface::return_type CurieArmController::read(
     joint_positions_[4] = status_.arm.wrist_roll_status.dutyCycleEncPosition / RAD_TO_DEG;
     joint_positions_[5] = status_.arm.gripper_status.dutyCycleEncPosition / RAD_TO_DEG;
 
-    joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RAD_TO_DEG;
-    joint_velocities_[1] = status_.arm.shoulder_status.dutyCycleEncVelocity / RAD_TO_DEG;
-    joint_velocities_[2] = status_.arm.elbow_status.dutyCycleEncVelocity / RAD_TO_DEG;
-    joint_velocities_[3] = status_.arm.wrist_pitch_status.dutyCycleEncVelocity / RAD_TO_DEG;
-    joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RAD_TO_DEG;
-    joint_velocities_[5] = status_.arm.gripper_status.dutyCycleEncVelocity / RAD_TO_DEG;
+    joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[1] = status_.arm.shoulder_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[2] = status_.arm.elbow_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[3] = status_.arm.wrist_pitch_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
+    joint_velocities_[5] = status_.arm.gripper_status.dutyCycleEncVelocity / RADPS_TO_DEGPM;
 
     // Shift domain from [0, 2*pi] to [-pi, pi]
     for (size_t i = 0; i < joint_positions_.size(); i++)

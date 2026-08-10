@@ -17,9 +17,9 @@ int8_t hardware::SparkArmInterface::initialize(void* config)
 {
     bool isVCAN = (config != nullptr) ? *(static_cast<bool*>(config)) : false;
     can_transport_.open(isVCAN ? "vcan0" : CAN_INTERFACE, SPARK_ARM);
-    if (!can_transport_.isOpen())
-    {
-        return -1;
+
+    if (!can_transport_.isOpen()){
+        return static_cast<int8_t>(hardware::SparkArmInitResult::CAN_OPEN_ERROR);
     }
 
     if (!isVCAN)
@@ -43,7 +43,12 @@ int8_t hardware::SparkArmInterface::initialize(void* config)
         CHECK_RET_VAL(response, wrist_pitch_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
         CHECK_RET_VAL(response, gripper_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
     }
-    return 0;
+
+    return static_cast<int8_t>(hardware::SparkArmInitResult::SUCCESS);
+
+    //    SUCCESS = 0,
+    //    CAN_OPEN_ERROR = -1,
+    //    DEVICE_COMMUNICATION_ERROR = -2
 }
 
 int8_t hardware::SparkArmInterface::shutdown()
@@ -79,22 +84,22 @@ int8_t hardware::SparkArmInterface::write(void* data)
         return -1;
     }
 
-    base_.setPosition(arm_cmd->arm.base_position, PID_SLOT_POSITION);
+    base_.setPosition(arm_cmd->arm.base_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    shoulder_.setPosition(arm_cmd->arm.shoulder_position, PID_SLOT_POSITION);
+    shoulder_.setPosition(arm_cmd->arm.shoulder_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    elbow_.setPosition(arm_cmd->arm.elbow_position, PID_SLOT_POSITION);
+    elbow_.setPosition(arm_cmd->arm.elbow_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_roll_.setPosition(arm_cmd->arm.wrist_roll_position, PID_SLOT_POSITION);
+    wrist_roll_.setPosition(arm_cmd->arm.wrist_roll_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    wrist_pitch_.setPosition(arm_cmd->arm.wrist_pitch_position, PID_SLOT_POSITION);
+    wrist_pitch_.setPosition(arm_cmd->arm.wrist_pitch_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
-    gripper_.setPosition(arm_cmd->arm.gripper_position, PID_SLOT_POSITION);
+    gripper_.setPosition(arm_cmd->arm.gripper_position);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
 
     return 0;
