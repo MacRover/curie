@@ -34,14 +34,14 @@ int8_t hardware::SparkArmInterface::initialize(void* config)
         CHECK_RET_VAL(response, elbow_.setSensorType(NONE, std::chrono::milliseconds(100)));
         CHECK_RET_VAL(response, wrist_roll_.setSensorType(NONE, std::chrono::milliseconds(100)));
         CHECK_RET_VAL(response, wrist_pitch_.setSensorType(NONE, std::chrono::milliseconds(100)));
-        CHECK_RET_VAL(response, gripper_.setSensorType(NONE, std::chrono::milliseconds(100)));
+        // CHECK_RET_VAL(response, gripper_.setSensorType(NONE, std::chrono::milliseconds(100)));
 
         CHECK_RET_VAL(response, base_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
         CHECK_RET_VAL(response, shoulder_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
         CHECK_RET_VAL(response, elbow_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
         CHECK_RET_VAL(response, wrist_roll_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
         CHECK_RET_VAL(response, wrist_pitch_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
-        CHECK_RET_VAL(response, gripper_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
+        // CHECK_RET_VAL(response, gripper_.setSensorType(DUTY_CYCLE_ENCODER, std::chrono::milliseconds(100)));
     }
     return 0;
 }

@@ -15,10 +15,6 @@ typedef enum : uint8_t
     RIGHT_STICK = 10,
     LEFT_BUMPER = 4,
     RIGHT_BUMPER = 5,
-    DPAD_UP = 11,
-    DPAD_DOWN = 12,
-    DPAD_LEFT = 13,
-    DPAD_RIGHT = 14
 } Button;
 
 typedef enum : uint8_t
@@ -28,7 +24,9 @@ typedef enum : uint8_t
     LEFT_TRIGGER = 2,
     RIGHT_X = 3,
     RIGHT_Y = 4,
-    RIGHT_TRIGGER = 5
+    RIGHT_TRIGGER = 5,
+    DPAD_X = 6,
+    DPAD_Y = 7,
 } Axis;
 
 typedef enum : uint8_t
@@ -130,15 +128,15 @@ void base::Basestation::_joy_arm_callback(const sensor_msgs::msg::Joy::SharedPtr
         case SERVO:
         {
             servo_cmd_msg_.header.stamp = this->now();
-            servo_cmd_msg_.header.frame_id = "base_link";
-            servo_cmd_msg_.twist.linear.x = msg->axes[RIGHT_Y];
-            servo_cmd_msg_.twist.linear.y = msg->axes[RIGHT_X];
+            servo_cmd_msg_.header.frame_id = "endeffector_link";
+            servo_cmd_msg_.twist.linear.x = msg->axes[LEFT_X] * -1.0;
+            servo_cmd_msg_.twist.linear.y = msg->axes[RIGHT_Y];
             servo_cmd_msg_.twist.linear.z = (msg->axes[RIGHT_TRIGGER] - msg->axes[LEFT_TRIGGER]) / 2.0;
             // servo_cmd_msg_.twist.angular.x = msg->axes[LEFT_X] * -1.0;
             // servo_cmd_msg_.twist.angular.y = msg->axes[LEFT_Y] * -1.0;
             servo_joint_cmd_msg_.header.stamp = this->now();
             servo_joint_cmd_msg_.header.frame_id = "base_link";
-            servo_joint_cmd_msg_.velocities = {msg->axes[LEFT_Y], msg->axes[LEFT_X]};
+            servo_joint_cmd_msg_.velocities = {msg->axes[DPAD_Y], msg->axes[DPAD_X]};
 
             arm_servo_pub_->publish(servo_cmd_msg_);
             arm_servo_joint_pub_->publish(servo_joint_cmd_msg_);
