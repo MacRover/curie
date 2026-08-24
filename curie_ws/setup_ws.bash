@@ -19,6 +19,9 @@ if [[ "$PATH" != *"$SOURCE_DIR/$BIN_PATH"* ]]; then
     # Needed since moveit and nav2 uses Cyclone DDS
     echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> "$HOME/.bashrc"
     
+    cp "$SOURCE_DIR/cyclonedds.xml.template" "$SOURCE_DIR/cyclonedds.xml"
+    echo "export CYCLONEDDS_URI=file://$SOURCE_DIR/cyclonedds.xml" >> "$HOME/.bashrc"
+    
     echo "Setup complete, source your .bashrc for changes to take effect"
 else
     rosdep install --from-paths $SOURCE_DIR/src --ignore-src -y

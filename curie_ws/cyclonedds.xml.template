@@ -1,20 +1,21 @@
+ <!-- https://github.com/eclipse-cyclonedds/cyclonedds/blob/master/docs/manual/options.md -->
  <?xml version="1.0" encoding="UTF-8" ?>
   <CycloneDDS xmlns="https://cdds.io/config">
     <Domain id="any">
       <General>
         <Interfaces>
-          <NetworkInterface name="wlp0s20f3" priority="default"/>
+          <NetworkInterface autodetermine="true" priority="default" />
         </Interfaces>
         <AllowMulticast>false</AllowMulticast>
+        <MaxMessageSize>65500B</MaxMessageSize>
       </General>
       <Discovery>
         <ParticipantIndex>auto</ParticipantIndex>
         <MaxAutoParticipantIndex>24</MaxAutoParticipantIndex>
         <Peers>
-          <Peer address="127.0.0.1"/>
-          <Peer address="192.168.1.20"/>
-          <Peer address="192.168.1.199"/>
-	  <Peer address="192.168.1.21"/>
+          <Peer address="127.0.0.1"/> <!-- this machine -->
+          <Peer address="192.168.1.199"/> <!-- other peers on the network -->
+	        <Peer address="192.168.1.21"/>
         </Peers>
         <SPDPInterval>2s</SPDPInterval>
       </Discovery>
