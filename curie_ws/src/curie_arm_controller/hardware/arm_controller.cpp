@@ -60,9 +60,63 @@ if (arm_vel_init_result < 0){
     arm_hw_thread_ = std::thread(&hardware::SparkArmInterface::run, &arm_hardware_);
     joint_velocities_.resize(info_.joints.size(), 0.0);
     joint_positions_.resize(info_.joints.size(), 0.0);
+    raw_joint_positions_.resize(info_.joints.size(), 0.0);
     hw_pos_commands_.resize(info_.joints.size(), 0.0);
     hw_vel_commands_.resize(info_.joints.size(), 0.0);
     hw_pos_commands_prev_.resize(info_.joints.size(), 0.0);
+
+    const double sampling_frequency = std::stod(info_.hardware_parameters["lpf_sampling_frequency"]);
+
+    const double damping_frequency = std::stod(info_.hardware_parameters["lpf_damping_frequency"]);
+
+    const double damping_intensity = std::stod(info_.hardware_parameters["lpf_damping_intensity"]);
+
+    //LPF startup log
+    RCLCPP_INFO(
+    rclcpp::get_logger("ArmSystem"),
+    "Encoder LPF configured: sampling=%.1f Hz, damping=%.1f Hz, intensity=%.1f",
+    sampling_frequency,
+    damping_frequency,
+    damping_intensity
+    );
+
+    base_lpf_.set_params(
+        sampling_frequency,
+        damping_frequency,
+        damping_intensity);
+
+    shoulder_lpf_.set_params(
+        sampling_frequency,
+        damping_frequency,
+        damping_intensity);
+
+    elbow_lpf_.set_params(
+        sampling_frequency,
+        damping_frequency,
+        damping_intensity);
+
+    wrist_pitch_lpf_.set_params(
+        sampling_frequency,
+        damping_frequency,
+        damping_intensity);
+
+    wrist_roll_lpf_.set_params(
+        sampling_frequency,
+        damping_frequency,
+        damping_intensity);
+
+    gripper_lpf_.set_params(
+        sampling_frequency,
+        damping_frequency,
+        damping_intensity);
+
+    base_lpf_.configure();
+    shoulder_lpf_.configure();
+    elbow_lpf_.configure();
+    wrist_pitch_lpf_.configure();
+    wrist_roll_lpf_.configure();
+    gripper_lpf_.configure();
+
     memset(&status_, 0, sizeof(status_));
     arm_vel_state_ = false;
 
@@ -71,16 +125,21 @@ if (arm_vel_init_result < 0){
 
 std::vector<hardware_interface::StateInterface> CurieArmController::export_state_interfaces()
 {
-  std::vector<hardware_interface::StateInterface> state_interfaces;
-  for (auto i = 0u; i < info_.joints.size(); i++)
-  {
-    state_interfaces.emplace_back(
-        info_.joints[i].name, "position", &joint_positions_[i]);
-    state_interfaces.emplace_back(
-        info_.joints[i].name, "velocity", &joint_velocities_[i]);
-  }
+    std::vector<hardware_interface::StateInterface> state_interfaces;
 
-  return state_interfaces;
+    for (auto i = 0u; i < info_.joints.size(); i++)
+    {
+        state_interfaces.emplace_back(
+            info_.joints[i].name, "position", &joint_positions_[i]);
+
+        state_interfaces.emplace_back(
+            info_.joints[i].name, "velocity", &joint_velocities_[i]);
+
+        state_interfaces.emplace_back(
+            info_.joints[i].name, "raw_position", &raw_joint_positions_[i]);
+    }
+
+    return state_interfaces;
 }
 
 std::vector<hardware_interface::CommandInterface> CurieArmController::export_command_interfaces()
@@ -111,8 +170,7 @@ hardware_interface::CallbackReturn CurieArmController::on_deactivate(
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type CurieArmController::read(
-    const rclcpp::Time & time, const rclcpp::Duration & period)
+hardware_interface::return_type CurieArmController::read(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
     (void)time;
     (void)period;
@@ -122,12 +180,74 @@ hardware_interface::return_type CurieArmController::read(
         return hardware_interface::return_type::ERROR;
     }
 
-    joint_positions_[0] = status_.arm.base_status.dutyCycleEncPosition / RAD_TO_DEG;
-    joint_positions_[1] = status_.arm.shoulder_status.dutyCycleEncPosition / RAD_TO_DEG;
-    joint_positions_[2] = status_.arm.elbow_status.dutyCycleEncPosition / RAD_TO_DEG;
-    joint_positions_[3] = status_.arm.wrist_pitch_status.dutyCycleEncPosition / RAD_TO_DEG;
-    joint_positions_[4] = status_.arm.wrist_roll_status.dutyCycleEncPosition / RAD_TO_DEG;
-    joint_positions_[5] = status_.arm.gripper_status.dutyCycleEncPosition / RAD_TO_DEG;
+    double raw_base = status_.arm.base_status.dutyCycleEncPosition / RAD_TO_DEG;
+
+    double raw_shoulder = status_.arm.shoulder_status.dutyCycleEncPosition / RAD_TO_DEG;
+
+    double raw_elbow = status_.arm.elbow_status.dutyCycleEncPosition / RAD_TO_DEG;
+
+    double raw_wrist_pitch = status_.arm.wrist_pitch_status.dutyCycleEncPosition / RAD_TO_DEG;
+
+    double raw_wrist_roll = status_.arm.wrist_roll_status.dutyCycleEncPosition / RAD_TO_DEG;
+
+    double raw_gripper = status_.arm.gripper_status.dutyCycleEncPosition / RAD_TO_DEG;
+
+    // Shift raw encoder domain from [0, 2*pi] to [-pi, pi]
+    if (raw_base > M_PI)
+        raw_base -= 2.0 * M_PI;
+
+    if (raw_shoulder > M_PI)
+        raw_shoulder -= 2.0 * M_PI;
+
+    if (raw_elbow > M_PI)
+        raw_elbow -= 2.0 * M_PI;
+
+    if (raw_wrist_pitch > M_PI)
+        raw_wrist_pitch -= 2.0 * M_PI;
+
+    if (raw_wrist_roll > M_PI)
+        raw_wrist_roll -= 2.0 * M_PI;
+
+    if (raw_gripper > M_PI)
+        raw_gripper -= 2.0 * M_PI;
+
+    // Store unfiltered encoder positions for testing
+    raw_joint_positions_[0] = raw_base;
+    raw_joint_positions_[1] = raw_shoulder;
+    raw_joint_positions_[2] = raw_elbow;
+    raw_joint_positions_[3] = raw_wrist_pitch;
+    raw_joint_positions_[4] = raw_wrist_roll;
+    raw_joint_positions_[5] = raw_gripper;
+
+    if (!lpf_initialized_)
+    {
+        joint_positions_[0] = raw_base;
+        joint_positions_[1] = raw_shoulder;
+        joint_positions_[2] = raw_elbow;
+        joint_positions_[3] = raw_wrist_pitch;
+        joint_positions_[4] = raw_wrist_roll;
+        joint_positions_[5] = raw_gripper;
+
+        double dummy_output;
+
+        base_lpf_.update(raw_base, dummy_output);
+        shoulder_lpf_.update(raw_shoulder, dummy_output);
+        elbow_lpf_.update(raw_elbow, dummy_output);
+        wrist_pitch_lpf_.update(raw_wrist_pitch, dummy_output);
+        wrist_roll_lpf_.update(raw_wrist_roll, dummy_output);
+        gripper_lpf_.update(raw_gripper, dummy_output);
+
+        lpf_initialized_ = true;
+    }
+    else
+    {
+        base_lpf_.update(raw_base, joint_positions_[0]);
+        shoulder_lpf_.update(raw_shoulder, joint_positions_[1]);
+        elbow_lpf_.update(raw_elbow, joint_positions_[2]);
+        wrist_pitch_lpf_.update(raw_wrist_pitch, joint_positions_[3]);
+        wrist_roll_lpf_.update(raw_wrist_roll, joint_positions_[4]);
+        gripper_lpf_.update(raw_gripper, joint_positions_[5]);
+    }
 
     joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RAD_TO_DEG;
     joint_velocities_[1] = status_.arm.shoulder_status.dutyCycleEncVelocity / RAD_TO_DEG;
@@ -136,20 +256,10 @@ hardware_interface::return_type CurieArmController::read(
     joint_velocities_[4] = status_.arm.wrist_roll_status.dutyCycleEncVelocity / RAD_TO_DEG;
     joint_velocities_[5] = status_.arm.gripper_status.dutyCycleEncVelocity / RAD_TO_DEG;
 
-    // Shift domain from [0, 2*pi] to [-pi, pi]
-    for (size_t i = 0; i < joint_positions_.size(); i++)
-    {
-        if (joint_positions_[i] > M_PI)
-        {
-            joint_positions_[i] -= 2.0f * M_PI;
-        }
-    }
-
     return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type CurieArmController::write(
-    const rclcpp::Time & time, const rclcpp::Duration & period)
+hardware_interface::return_type CurieArmController::write(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
     (void)time;
     (void)period;

@@ -14,6 +14,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "curie_hw_control/spark_arm_hardware.hpp"
 #include "curie_hw_control/spark_arm_velocity_hardware.hpp"
+#include "control_toolbox/low_pass_filter.hpp"
 
 namespace curie_arm_controller
 {
@@ -49,9 +50,19 @@ namespace curie_arm_controller
         hardware::SparkArmVelocityInterface arm_vel_hardware_;
         std::vector<double> joint_velocities_;
         std::vector<double> joint_positions_;
+        std::vector<double> raw_joint_positions_;
         std::vector<double> hw_pos_commands_;
         std::vector<double> hw_vel_commands_;
         std::vector<double> hw_pos_commands_prev_;
+        control_toolbox::LowPassFilter<double> base_lpf_;
+        control_toolbox::LowPassFilter<double> shoulder_lpf_;
+        control_toolbox::LowPassFilter<double> elbow_lpf_;
+        control_toolbox::LowPassFilter<double> wrist_pitch_lpf_;
+        control_toolbox::LowPassFilter<double> wrist_roll_lpf_;
+        control_toolbox::LowPassFilter<double> gripper_lpf_;
+        
+        // LPF flag
+        bool lpf_initialized_ = false;
 
         SparkCommand commands_;
         SparkStatus status_;
