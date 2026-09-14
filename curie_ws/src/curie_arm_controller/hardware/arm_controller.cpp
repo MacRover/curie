@@ -20,11 +20,22 @@ hardware_interface::CallbackReturn CurieArmController::on_init(
     std::transform(use_vcan_hw_param.begin(), use_vcan_hw_param.end(), use_vcan_hw_param.begin(), ::tolower);
     std::istringstream(use_vcan_hw_param) >> std::boolalpha >> use_vcan_interface;
 
+    std::string filter_state_interfaces_param = info_.hardware_parameters["filter_state_interfaces"];
+
+    std::transform(filter_state_interfaces_param.begin(), filter_state_interfaces_param.end(), filter_state_interfaces_param.begin(), ::tolower);
+    std::istringstream(filter_state_interfaces_param) >> std::boolalpha >> filter_state_interfaces_;
+
     RCLCPP_INFO(
         rclcpp::get_logger("ArmSystem"),
         "Virtual CAN is %s. Using CAN interface '%s'.",
         use_vcan_interface ? "enabled" : "disabled",
         use_vcan_interface ? "vcan0" : "can0"
+    );
+
+    RCLCPP_INFO(
+        rclcpp::get_logger("ArmSystem"),
+        "Encoder state filtering is %s.",
+        filter_state_interfaces_ ? "enabled" : "disabled"
     );
 
 int8_t arm_init_result = arm_hardware_.initialize(&use_vcan_interface);
@@ -61,61 +72,14 @@ if (arm_vel_init_result < 0){
     joint_velocities_.resize(info_.joints.size(), 0.0);
     joint_positions_.resize(info_.joints.size(), 0.0);
     raw_joint_positions_.resize(info_.joints.size(), 0.0);
+    joint_lpfs_.resize(info_.joints.size());
     hw_pos_commands_.resize(info_.joints.size(), 0.0);
     hw_vel_commands_.resize(info_.joints.size(), 0.0);
     hw_pos_commands_prev_.resize(info_.joints.size(), 0.0);
+    
+    lpf_damping_frequency_ = std::stod(info_.hardware_parameters["lpf_damping_frequency"]);
 
-    const double sampling_frequency = std::stod(info_.hardware_parameters["lpf_sampling_frequency"]);
-
-    const double damping_frequency = std::stod(info_.hardware_parameters["lpf_damping_frequency"]);
-
-    const double damping_intensity = std::stod(info_.hardware_parameters["lpf_damping_intensity"]);
-
-    //LPF startup log
-    RCLCPP_INFO(
-    rclcpp::get_logger("ArmSystem"),
-    "Encoder LPF configured: sampling=%.1f Hz, damping=%.1f Hz, intensity=%.1f",
-    sampling_frequency,
-    damping_frequency,
-    damping_intensity
-    );
-
-    base_lpf_.set_params(
-        sampling_frequency,
-        damping_frequency,
-        damping_intensity);
-
-    shoulder_lpf_.set_params(
-        sampling_frequency,
-        damping_frequency,
-        damping_intensity);
-
-    elbow_lpf_.set_params(
-        sampling_frequency,
-        damping_frequency,
-        damping_intensity);
-
-    wrist_pitch_lpf_.set_params(
-        sampling_frequency,
-        damping_frequency,
-        damping_intensity);
-
-    wrist_roll_lpf_.set_params(
-        sampling_frequency,
-        damping_frequency,
-        damping_intensity);
-
-    gripper_lpf_.set_params(
-        sampling_frequency,
-        damping_frequency,
-        damping_intensity);
-
-    base_lpf_.configure();
-    shoulder_lpf_.configure();
-    elbow_lpf_.configure();
-    wrist_pitch_lpf_.configure();
-    wrist_roll_lpf_.configure();
-    gripper_lpf_.configure();
+    lpf_damping_intensity_ = std::stod(info_.hardware_parameters["lpf_damping_intensity"]);
 
     memset(&status_, 0, sizeof(status_));
     arm_vel_state_ = false;
@@ -173,13 +137,37 @@ hardware_interface::CallbackReturn CurieArmController::on_deactivate(
 hardware_interface::return_type CurieArmController::read(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
     (void)time;
-    (void)period;
 
     if (arm_hardware_.read(static_cast<void*>(&status_)) < 0)
     {
         return hardware_interface::return_type::ERROR;
     }
 
+    if (filter_state_interfaces_ && !lpf_configured_)  // filter state interfaces enable and LPF not yet configured
+    {
+        const double sampling_frequency = 1.0 / period.seconds();
+
+        for (size_t i = 0; i < joint_positions_.size(); i++)
+        {
+            joint_lpfs_[i].set_params(
+                sampling_frequency,
+                lpf_damping_frequency_,
+                lpf_damping_intensity_);
+
+            joint_lpfs_[i].configure();
+        }
+
+        RCLCPP_INFO(
+            rclcpp::get_logger("ArmSystem"),
+            "Encoder LPF configured: sampling=%.1f Hz, damping=%.1f Hz, intensity=%.1f",
+            sampling_frequency,
+            lpf_damping_frequency_,
+            lpf_damping_intensity_);
+
+        lpf_configured_ = true;
+    }
+
+    // Convert raw encoder positions from degrees to radians
     double raw_base = status_.arm.base_status.dutyCycleEncPosition / RAD_TO_DEG;
 
     double raw_shoulder = status_.arm.shoulder_status.dutyCycleEncPosition / RAD_TO_DEG;
@@ -192,7 +180,7 @@ hardware_interface::return_type CurieArmController::read(const rclcpp::Time & ti
 
     double raw_gripper = status_.arm.gripper_status.dutyCycleEncPosition / RAD_TO_DEG;
 
-    // Shift raw encoder domain from [0, 2*pi] to [-pi, pi]
+    // Shift raw encoder domain/angle from [0, 2*pi] to [-pi, pi]
     if (raw_base > M_PI)
         raw_base -= 2.0 * M_PI;
 
@@ -218,35 +206,32 @@ hardware_interface::return_type CurieArmController::read(const rclcpp::Time & ti
     raw_joint_positions_[3] = raw_wrist_pitch;
     raw_joint_positions_[4] = raw_wrist_roll;
     raw_joint_positions_[5] = raw_gripper;
-
-    if (!lpf_initialized_)
+    
+    // Raw encoder -> raw_joint_positions_ -> joint_positions_ (filtered or unfiltered)
+    if (filter_state_interfaces_)
     {
-        joint_positions_[0] = raw_base;
-        joint_positions_[1] = raw_shoulder;
-        joint_positions_[2] = raw_elbow;
-        joint_positions_[3] = raw_wrist_pitch;
-        joint_positions_[4] = raw_wrist_roll;
-        joint_positions_[5] = raw_gripper;
+        if (!lpf_initialized_)
+        {
+            joint_positions_ = raw_joint_positions_; // Initialize joint positions with raw values on first read
 
-        double dummy_output;
+            for (size_t i = 0; i < joint_lpfs_.size(); i++)
+            {
+                double dummy_output; // Every filter needs an output variable to update
+                joint_lpfs_[i].update(raw_joint_positions_[i], dummy_output);
+            }
 
-        base_lpf_.update(raw_base, dummy_output);
-        shoulder_lpf_.update(raw_shoulder, dummy_output);
-        elbow_lpf_.update(raw_elbow, dummy_output);
-        wrist_pitch_lpf_.update(raw_wrist_pitch, dummy_output);
-        wrist_roll_lpf_.update(raw_wrist_roll, dummy_output);
-        gripper_lpf_.update(raw_gripper, dummy_output);
+            lpf_initialized_ = true;
 
-        lpf_initialized_ = true;
-    }
-    else
-    {
-        base_lpf_.update(raw_base, joint_positions_[0]);
-        shoulder_lpf_.update(raw_shoulder, joint_positions_[1]);
-        elbow_lpf_.update(raw_elbow, joint_positions_[2]);
-        wrist_pitch_lpf_.update(raw_wrist_pitch, joint_positions_[3]);
-        wrist_roll_lpf_.update(raw_wrist_roll, joint_positions_[4]);
-        gripper_lpf_.update(raw_gripper, joint_positions_[5]);
+        }else{
+
+            for (size_t i = 0; i < joint_lpfs_.size(); i++)
+            {
+                joint_lpfs_[i].update(raw_joint_positions_[i], joint_positions_[i]);
+            }
+        }
+    }else{
+
+        joint_positions_ = raw_joint_positions_;
     }
 
     joint_velocities_[0] = status_.arm.base_status.dutyCycleEncVelocity / RAD_TO_DEG;

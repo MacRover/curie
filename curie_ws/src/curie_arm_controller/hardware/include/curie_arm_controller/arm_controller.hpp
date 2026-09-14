@@ -54,16 +54,19 @@ namespace curie_arm_controller
         std::vector<double> hw_pos_commands_;
         std::vector<double> hw_vel_commands_;
         std::vector<double> hw_pos_commands_prev_;
-        control_toolbox::LowPassFilter<double> base_lpf_;
-        control_toolbox::LowPassFilter<double> shoulder_lpf_;
-        control_toolbox::LowPassFilter<double> elbow_lpf_;
-        control_toolbox::LowPassFilter<double> wrist_pitch_lpf_;
-        control_toolbox::LowPassFilter<double> wrist_roll_lpf_;
-        control_toolbox::LowPassFilter<double> gripper_lpf_;
         
-        // LPF flag
-        bool lpf_initialized_ = false;
+        // LPF objects for each joint
+        std::vector<control_toolbox::LowPassFilter<double>> joint_lpfs_;
+        
+        double lpf_damping_frequency_;
+        double lpf_damping_intensity_;
+        
+        bool filter_state_interfaces_;
 
+        // LPF flag
+        bool lpf_configured_ = false;
+        bool lpf_initialized_ = false;
+        
         SparkCommand commands_;
         SparkStatus status_;
 
