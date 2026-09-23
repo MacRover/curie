@@ -181,18 +181,62 @@ def generate_launch_description():
         )
     )
 
-    # servo_node = Node(
-    #     package="moveit_servo",
-    #     executable="servo_node_main",
-    #     parameters=[
-    #         servo_params,
-    #         low_pass_filter_coeff,
-    #         moveit_config.robot_description,
-    #         moveit_config.robot_description_semantic,
-    #         moveit_config.robot_description_kinematics,
-    #     ],
-    #     output="screen",
-    # )
+    servo_node = Node(
+        package="moveit_servo",
+        executable="servo_node_main",
+        parameters=[
+            servo_params,
+            low_pass_filter_coeff,
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+            moveit_config.robot_description_kinematics,
+        ],
+        output="screen",
+    )
+
+    servo_antidrift_node = Node(
+        package="curie_arm_servo",
+        executable="servo_antidrift",
+        name="antidrift_node",
+        parameters=[{
+            "antidrift_enable": servo_yaml["antidrift_enable"],
+            "move_group_name": servo_yaml["move_group_name"],
+            "joint_topic": servo_yaml["joint_topic"],
+            "planning_frame": servo_yaml["planning_frame"],
+            "ee_frame": servo_yaml["ee_frame_name"],
+            "drift_axes": {
+                "x": {
+                    "linear_kP": servo_yaml["drift_axes"]["x"]["linear_kP"],
+                    "euler_kP": servo_yaml["drift_axes"]["x"]["euler_kP"],
+                    "linear_kI": 0.0,
+                    "linear_kD": 0.0,
+                    "pid_min": servo_yaml["drift_axes"]["x"]["pid_min"],
+                    "pid_max": servo_yaml["drift_axes"]["x"]["pid_max"]
+                },
+                "y": {
+                    "linear_kP": servo_yaml["drift_axes"]["y"]["linear_kP"],
+                    "euler_kP": servo_yaml["drift_axes"]["y"]["euler_kP"],
+                    "linear_kI": 0.0,
+                    "linear_kD": 0.0,
+                    "pid_min": servo_yaml["drift_axes"]["y"]["pid_min"],
+                    "pid_max": servo_yaml["drift_axes"]["y"]["pid_max"]
+                },
+                "z": {
+                    "linear_kP": servo_yaml["drift_axes"]["z"]["linear_kP"],
+                    "euler_kP": servo_yaml["drift_axes"]["z"]["euler_kP"],
+                    "linear_kI": 0.0,
+                    "linear_kD": 0.0,
+                    "pid_min": servo_yaml["drift_axes"]["z"]["pid_min"],
+                    "pid_max": servo_yaml["drift_axes"]["z"]["pid_max"]
+                }
+            },
+            "translation_dz": servo_yaml["translation_dz"],
+            "publish_rate": 40.0
+            },
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+        ],
+    )
 
     servo_node_container = ComposableNodeContainer(
         name="servo_node_container",
@@ -311,8 +355,9 @@ def generate_launch_description():
         control_node,
         heartbeat_node,
         spark_mock_handler,
-        # servo_node,
-        servo_node_container,
+        servo_node,
+        servo_antidrift_node,
+        # servo_node_container,
         enable_req_servo_node,
         joint_state_broadcaster_spawner,
         delay_arm_controller_spawner,
