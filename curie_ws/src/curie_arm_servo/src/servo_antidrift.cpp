@@ -174,13 +174,6 @@ void ServoAntiDrifter::_timer_callback(void)
         q_error.coeffs() *= -1.0;
     }
     Eigen::Vector3d rvec_error = 2 * atan(q_error.vec().norm() / q_error.w()) * q_error.vec().normalized();
-    double temp_x, temp_y, temp_z;
-    temp_x = rvec_error.x();
-    temp_y = rvec_error.y();
-    temp_z = rvec_error.z();
-    rvec_error.x() = -temp_y;
-    rvec_error.y() = -temp_x;
-    rvec_error.z() = temp_z;
     
     // RCLCPP_INFO(node_->get_logger(), "tvec_error: [%f, %f, %f], rvec_error: [%f, %f, %f]", 
     //             tvec_error.x(), tvec_error.y(), tvec_error.z(), rvec_error.x(), rvec_error.y(), rvec_error.z());

@@ -80,7 +80,7 @@ drift_axes:
     pid_max: 0.5
   y: # PID gains for y-axis drift correction
     linear_kP: 40.0
-    euler_kP: 0.0
+    euler_kP: 10.0
     pid_min: -0.5
     pid_max: 0.5
   z: # PID gains for z-axis drift correction
