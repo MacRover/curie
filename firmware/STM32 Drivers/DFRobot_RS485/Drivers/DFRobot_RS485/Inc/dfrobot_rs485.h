@@ -8,6 +8,11 @@
 #ifndef DFROBOT_RS485_INC_DFROBOT_RS485_H_
 #define DFROBOT_RS485_INC_DFROBOT_RS485_H_
 
+#include <stdint.h>
+#include <stddef.h>
+#include "stm32f1xx_hal.h"
+#define RS485_DIR_Pin GPIO_PIN_8
+
 /*
 
 - StatusTypeDef: the status of the driver - enum
@@ -86,8 +91,8 @@ typedef struct {
 */
 
 DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_Init(DFROBOT_RS485_HandleTypeDef *device, UART_HandleTypeDef *huart);
-DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SetOffset(DFROBOT_RS485_HandleTypeDef *device, DFROBOT_RS485_OffsetSelectionTypeDef offset_type);
-DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SetScaling(DFROBOT_RS485_HandleTypeDef *device, DFROBOT_RS485_ScaleSelectionTypeDef scale_type);
+DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SetOffset(DFROBOT_RS485_HandleTypeDef *device, DFROBOT_RS485_OffsetSelectionTypeDef offset_type, float value);
+DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SetScaling(DFROBOT_RS485_HandleTypeDef *device, DFROBOT_RS485_ScaleSelectionTypeDef scale_type, float value);
 DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_CRC16_2(DFROBOT_RS485_HandleTypeDef *device);
 DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_ParseSensorData(DFROBOT_RS485_HandleTypeDef *device);
 DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SensorRead(DFROBOT_RS485_HandleTypeDef *device);

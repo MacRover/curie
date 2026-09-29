@@ -9,6 +9,7 @@
 #include "dfrobot_rs485.h"
 
 
+
 DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_Init(DFROBOT_RS485_HandleTypeDef *device, UART_HandleTypeDef *huart) {
 
     if (huart == NULL || HAL_UART_GetState(huart) != HAL_UART_STATE_READY) {
@@ -149,18 +150,26 @@ DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SensorRead(DFROBOT_RS485_HandleTypeDef
 
     uint8_t command[8] = {0x01, 0x03, 0x00, 0x00, 0x00, 0x04, 0x44, 0x09};
 
+    HAL_GPIO_WritePin(GPIOA, RS485_DIR_Pin, GPIO_PIN_SET);
+
     if (HAL_UART_Transmit(device->__huart, command, 8, 100) != HAL_OK) {
+    	HAL_GPIO_WritePin(GPIOA, RS485_DIR_Pin, GPIO_PIN_RESET);
         return DFROBOT_RS485_ERROR;
     }
+
+    while (__HAL_UART_GET_FLAG(device->__huart, UART_FLAG_TC) == RESET);
+
+    HAL_GPIO_WritePin(GPIOA, RS485_DIR_Pin, GPIO_PIN_RESET);
+
 
 
     // Run a HAL_Delay for processing
 
-    HAL_Delay(10); // todo refine
+    // HAL_Delay(10); // todo refine
 
     // Now run the receive function
 
-    if (HAL_UART_Receive(device->__huart, device->buf, 13, 100) != HAL_OK) {
+    if (HAL_UART_Receive(device->__huart, device->buf, 13, 200) != HAL_OK) {
         return DFROBOT_RS485_ERROR;
     }
 
