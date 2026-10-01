@@ -13,7 +13,7 @@
                 <plugin>curie_arm_controller/CurieArmController</plugin>
                 <param name="use_vcan">${use_mock_hardware}</param>
                 <!-- placeholder for damping parameters -->
-                <param name="filter_state_interfaces">true</param> <!-- true == using LPF, false == using raw encoder values. -->
+                <param name="filter_state_interfaces">false</param> <!-- true == using LPF, false == using raw encoder values. -->
                 <param name="lpf_damping_frequency">5.0</param>
                 <param name="lpf_damping_intensity">0.0</param>
                 <!-- <plugin>mock_components/GenericSystem</plugin> -->
