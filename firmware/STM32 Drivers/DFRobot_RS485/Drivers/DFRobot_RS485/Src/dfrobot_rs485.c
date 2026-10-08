@@ -101,13 +101,13 @@ DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_CRC16_2(DFROBOT_RS485_HandleTypeDef *d
         }
     }
 
-    device->crc16_result = ((crc & 0x00FF) << 8) | ((crc & 0xFF00) >> 8);
+    uint16_t crc16_result = ((crc & 0x00FF) << 8) | ((crc & 0xFF00) >> 8);
 
     // Checking the checksum
 
     uint16_t received_crc = device->buf[11] << 8 | device->buf[12];
 
-    if (device->crc16_result == received_crc) {
+    if (crc16_result == received_crc) {
         return DFROBOT_RS485_OK;
     } else {
         return DFROBOT_RS485_ERROR;
@@ -157,6 +157,7 @@ DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SensorRead(DFROBOT_RS485_HandleTypeDef
      * 0x00, 0x00 --> Starting address 0x0000
      * 0x00, 0x04 --> Register count: Read 4 registers of data
      * 0x44, 0x09 --> CRC Checksum
+
      */
 
     HAL_GPIO_WritePin(GPIOA, RS485_DIR_Pin, GPIO_PIN_SET);
