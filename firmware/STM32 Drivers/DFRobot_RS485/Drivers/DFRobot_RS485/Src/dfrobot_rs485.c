@@ -150,6 +150,15 @@ DFROBOT_RS485_StatusTypeDef DFROBOT_RS485_SensorRead(DFROBOT_RS485_HandleTypeDef
 
     uint8_t command[8] = {0x01, 0x03, 0x00, 0x00, 0x00, 0x04, 0x44, 0x09};
 
+    /*
+     * Standard Modbus RTU Frame
+     * 0x01 - slave address, target device ID 1
+     * 0x03 - Function code --> Read data
+     * 0x00, 0x00 --> Starting address 0x0000
+     * 0x00, 0x04 --> Register count: Read 4 registers of data
+     * 0x44, 0x09 --> CRC Checksum
+     */
+
     HAL_GPIO_WritePin(GPIOA, RS485_DIR_Pin, GPIO_PIN_SET);
 
     if (HAL_UART_Transmit(device->__huart, command, 8, 100) != HAL_OK) {

@@ -13,6 +13,8 @@
 #include "stm32f1xx_hal.h"
 #define RS485_DIR_Pin GPIO_PIN_8
 
+//Todo change #include "stm32f1xx_hal.h" back, this was just for nucleo compatibility
+
 /*
 
 - StatusTypeDef: the status of the driver - enum
@@ -67,7 +69,6 @@ typedef struct {
     uint16_t ec;
 
     uint8_t data_length;
-    uint16_t crc16_result;
 
     uint8_t buf[13];
 
