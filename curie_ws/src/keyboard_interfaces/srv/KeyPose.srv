@@ -1,6 +1,0 @@
-string key 
----
-geometry_msgs/PoseStamped pose 
-bool success
-
-

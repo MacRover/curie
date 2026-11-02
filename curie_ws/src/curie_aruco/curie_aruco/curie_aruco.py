@@ -10,22 +10,11 @@ import threading
 import time
 from keyboard_interfaces.srv import KeyPose
 
-
-camera_calibration = np.array([
-    [646.1766307779318, 0.0,             324.9819077130353],
-    [0.0,              641.792949653196, 239.16580652097778],
-    [0.0,              0.0,              1.0]
-], dtype=np.float32)
-
-dist_coefficients = np.array([
-    [-0.41946931327287157, 0.29447310142797595, -0.0027275914345178866,
-      0.0013244262781277863, -0.12449654506105451]
-], dtype=np.float32)
+# Pointing to the camera_calibration folder images to get array values for the camera's calibration
+camera_calibration, dist_coefficients = load_coefficients("/camera_calibration.yml")
 
 W = 0.354
 H = 0.123
-
-
 def make_key_positions():
     r2, r3, r4, r5, r6 = 17.0, 36.0, 55.0, 74.0, 93.0
     keys = {
@@ -65,6 +54,15 @@ class MarkerDetectionSystem(Node):
             self.cap.read()
         if not self.cap.isOpened():
             self.get_logger().error('Failed to open camera!')
+            
+        ret, probe_frame = self.cap.read()
+        if ret:
+            self.get_logger().info(
+                f"[DEBUG] Camera frame shape: {probe_frame.shape} "
+                f"(calibration cx={camera_calibration[0,2]}, cy={camera_calibration[1,2]})"
+            )
+        else:
+            self.get_logger().warn("[DEBUG] Could not read a probe frame at startup to check resolution")
 
         self.pose_cv = threading.Condition()
         self.last_rvec = None
@@ -94,7 +92,15 @@ class MarkerDetectionSystem(Node):
             self.get_logger().warn('Camera read failed', throttle_duration_sec=2.0)
             return
 
-        corners, ids, _ = self.detector.detectMarkers(frame)
+        corners, ids, rejected = self.detector.detectMarkers(frame)
+
+        # DEBUG: what did detectMarkers actually see this frame?
+        id_list = ids.flatten().tolist() if ids is not None else []
+        self.get_logger().info(
+            f"[DEBUG] Frame saw {len(id_list)} marker(s): {id_list}, "
+            f"rejected candidates: {len(rejected) if rejected is not None else 0}",
+            throttle_duration_sec=1.0
+        )
 
         # draw detected markers onto a copy for display, regardless of pose success
         display_frame = frame.copy()
@@ -107,14 +113,41 @@ class MarkerDetectionSystem(Node):
         rvec, tvec = self.detect_markers(corners, ids)
 
         if rvec is not None and tvec is not None:
+            # DEBUG: confirm a pose was actually produced this frame
+            self.get_logger().info(
+                f"[DEBUG] Pose computed successfully. "
+                f"tvec={tvec.flatten().tolist()} rvec={rvec.flatten().tolist()}",
+                throttle_duration_sec=1.0
+            )
             with self.pose_cv:
                 self.last_rvec = rvec
                 self.last_tvec = tvec
                 self.pose_cv.notify_all()
+        else:
+            # DEBUG: explicitly note failure to compute a pose this frame
+            self.get_logger().info(
+                "[DEBUG] No pose computed this frame (detect_markers returned None, None)",
+                throttle_duration_sec=1.0
+            )
 
     def detect_markers(self, corners, ids):
         if ids is None or len(ids) < 4:
+            self.get_logger().info(
+                f"[DEBUG] detect_markers: insufficient markers "
+                f"(have {0 if ids is None else len(ids)}, need >= 4)",
+                throttle_duration_sec=1.0
+            )
             return None, None
+
+        # DEBUG: flag if more than 4 markers are visible, since the corner-role
+        # assignment logic below assumes exactly 4.
+        if len(ids) > 4:
+            self.get_logger().warn(
+                f"[DEBUG] detect_markers: {len(ids)} markers visible, but corner-role "
+                f"logic assumes exactly 4. Extra/duplicate markers may cause wrong "
+                f"corner assignment.",
+                throttle_duration_sec=1.0
+            )
 
         centers = [(corners[i][0].mean(axis=0), mid, i)
                    for i, mid in enumerate(ids.flatten())]
@@ -122,6 +155,13 @@ class MarkerDetectionSystem(Node):
         tl, br = centers[0], centers[-1]
         remaining = sorted(centers[1:3], key=lambda c: c[0][0])
         bl, tr = remaining[0], remaining[1]
+
+        # DEBUG: show which marker ID got assigned to which corner role this frame
+        self.get_logger().info(
+            f"[DEBUG] Corner assignment -> tl:id{tl[1]} tr:id{tr[1]} "
+            f"bl:id{bl[1]} br:id{br[1]}",
+            throttle_duration_sec=1.0
+        )
 
         marker_positions = {
             tl[1]: np.array([0.0, 0.0, 0.0], dtype=np.float32),
@@ -136,16 +176,40 @@ class MarkerDetectionSystem(Node):
                 object_pts.append(marker_positions[mid])
                 image_pts.append(corners[i][0].mean(axis=0))
 
+        # DEBUG: how many correspondences were actually built
+        self.get_logger().info(
+            f"[DEBUG] Built {len(object_pts)} object/image point correspondences "
+            f"(need >= 4 for solvePnP)",
+            throttle_duration_sec=1.0
+        )
+
         if len(object_pts) < 4:
+            self.get_logger().info(
+                "[DEBUG] Not enough matched correspondences to run solvePnP",
+                throttle_duration_sec=1.0
+            )
             return None, None
 
         object_pts = np.array(object_pts, dtype=np.float32).reshape(-1, 1, 3)
         image_pts = np.array(image_pts, dtype=np.float32).reshape(-1, 1, 2)
 
-        success, rvec, tvec = cv2.solvePnP(
-            object_pts, image_pts, camera_calibration, dist_coefficients,
-            flags=cv2.SOLVEPNP_IPPE
+        try:
+            success, rvec, tvec = cv2.solvePnP(
+                object_pts, image_pts, camera_calibration, dist_coefficients,
+                flags=cv2.SOLVEPNP_IPPE
+            )
+        except cv2.error as e:
+            # DEBUG: surface any OpenCV-level exception from solvePnP explicitly
+            self.get_logger().error(f"[DEBUG] solvePnP raised cv2.error: {e}")
+            raise
+
+        # DEBUG: explicit success/failure report from solvePnP itself
+        self.get_logger().info(
+            f"[DEBUG] solvePnP success={success}, "
+            f"object_pts={len(object_pts)}, image_pts={len(image_pts)}",
+            throttle_duration_sec=1.0
         )
+
         return (rvec, tvec) if success else (None, None)
 
     def handle_request(self, request, response):
@@ -153,6 +217,7 @@ class MarkerDetectionSystem(Node):
         self.get_logger().info(f"Looking for key '{key}'")
 
         if key not in self.KEY_POSITIONS:
+            self.get_logger().warn(f"[DEBUG] Key '{key}' not found in KEY_POSITIONS")
             response.success = False
             return response
 
@@ -165,7 +230,19 @@ class MarkerDetectionSystem(Node):
             rvec = self.last_rvec.copy()
             tvec = self.last_tvec.copy()
 
+        # DEBUG: confirm handle_request unblocked and which pose it's using
+        self.get_logger().info(
+            f"[DEBUG] handle_request for '{key}' unblocked. "
+            f"Using tvec={tvec.flatten().tolist()}",
+        )
+
         position = self.key_to_3d(key, rvec, tvec)
+
+        # DEBUG: final computed 3D position for this key, in camera frame
+        self.get_logger().info(
+            f"[DEBUG] Key '{key}' -> camera-frame position: "
+            f"x={position[0]:.4f} y={position[1]:.4f} z={position[2]:.4f}"
+        )
 
         response.pose.header.stamp = self.get_clock().now().to_msg()
         response.pose.header.frame_id = "camera_frame"
@@ -183,6 +260,14 @@ class MarkerDetectionSystem(Node):
         key_pos_kb = np.array([[x, y, 0.0]], dtype=np.float32)
         R, _ = cv2.Rodrigues(rvec)
         pos_camera = R @ key_pos_kb.T + tvec
+
+        # DEBUG: show the keyboard-local coordinate being transformed
+        self.get_logger().info(
+            f"[DEBUG] key_to_3d: key '{key}' keyboard-local (x={x:.4f}, y={y:.4f}) "
+            f"-> camera-frame {pos_camera.flatten().tolist()}",
+            throttle_duration_sec=1.0
+        )
+
         return pos_camera.flatten()
 
     def rotation_matrix_to_quaternion(self, R):
