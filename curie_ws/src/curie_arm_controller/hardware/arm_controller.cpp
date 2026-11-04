@@ -77,7 +77,14 @@ if (arm_vel_init_result < 0){
     hw_vel_commands_.resize(info_.joints.size(), 0.0);
     hw_pos_commands_prev_.resize(info_.joints.size(), 0.0);
     
-    lpf_damping_frequency_ = std::stod(info_.hardware_parameters["lpf_damping_frequency"]);
+    lpf_damping_frequencies_.resize(info_.joints.size(),5.0);
+
+    lpf_damping_frequencies_[0] = std::stod(info_.hardware_parameters["base_lpf_damping_frequency"]);
+    lpf_damping_frequencies_[1] = std::stod(info_.hardware_parameters["shoulder_lpf_damping_frequency"]);
+    lpf_damping_frequencies_[2] = std::stod(info_.hardware_parameters["elbow_lpf_damping_frequency"]);
+    lpf_damping_frequencies_[3] = std::stod(info_.hardware_parameters["wrist_pitch_lpf_damping_frequency"]);
+    lpf_damping_frequencies_[4] = std::stod(info_.hardware_parameters["wrist_roll_lpf_damping_frequency"]);
+    lpf_damping_frequencies_[5] = std::stod(info_.hardware_parameters["gripper_lpf_damping_frequency"]);
 
     lpf_damping_intensity_ = std::stod(info_.hardware_parameters["lpf_damping_intensity"]);
 
@@ -151,7 +158,7 @@ hardware_interface::return_type CurieArmController::read(const rclcpp::Time & ti
         {
             joint_lpfs_[i].set_params(
                 sampling_frequency,
-                lpf_damping_frequency_,
+                lpf_damping_frequencies_[i],
                 lpf_damping_intensity_);
 
             joint_lpfs_[i].configure();
@@ -159,10 +166,20 @@ hardware_interface::return_type CurieArmController::read(const rclcpp::Time & ti
 
         RCLCPP_INFO(
             rclcpp::get_logger("ArmSystem"),
-            "Encoder LPF configured: sampling=%.1f Hz, damping=%.1f Hz, intensity=%.1f",
+            "Encoder LPF configured: sampling=%.1f Hz, intensity=%.1f",
             sampling_frequency,
-            lpf_damping_frequency_,
             lpf_damping_intensity_);
+
+        
+        RCLCPP_INFO(
+            rclcpp::get_logger("ArmSystem"),
+            "LPF damping frequencies: base=%.1f Hz, shoulder=%.1f Hz, elbow=%.1f Hz, wrist_pitch=%.1f Hz, wrist_roll=%.1f Hz, gripper=%.1f Hz",
+            lpf_damping_frequencies_[0],
+            lpf_damping_frequencies_[1],
+            lpf_damping_frequencies_[2],
+            lpf_damping_frequencies_[3],
+            lpf_damping_frequencies_[4],
+            lpf_damping_frequencies_[5]);
 
         lpf_configured_ = true;
     }

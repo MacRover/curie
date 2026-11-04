@@ -58,7 +58,7 @@ namespace curie_arm_controller
         // LPF objects for each joint
         std::vector<control_toolbox::LowPassFilter<double>> joint_lpfs_;
         
-        double lpf_damping_frequency_;
+        std::vector<double> lpf_damping_frequencies_;
         double lpf_damping_intensity_;
         
         bool filter_state_interfaces_;
