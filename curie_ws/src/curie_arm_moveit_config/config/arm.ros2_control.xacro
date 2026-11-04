@@ -17,7 +17,7 @@
 
                 <param name="base_lpf_damping_frequency">3.0</param>
                 <param name="shoulder_lpf_damping_frequency">5.0</param>
-                <param name="elbow_lpf_damping_frequency">5.0</param>
+                <param name="elbow_lpf_damping_frequency">3.0</param>
                 <param name="wrist_pitch_lpf_damping_frequency">5.0</param>
                 <param name="wrist_roll_lpf_damping_frequency">5.0</param>
                 <param name="gripper_lpf_damping_frequency">5.0</param>
