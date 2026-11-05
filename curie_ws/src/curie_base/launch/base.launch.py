@@ -15,20 +15,20 @@ def generate_launch_description():
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=[
-            ComposableNode(
-                package="joy",
-                plugin="joy::Joy",
-                name="joy_drive_node",
-                parameters=[{
-                    "device_id": 0,
-                }],
-            ),
+            # ComposableNode(
+            #     package="joy",
+            #     plugin="joy::Joy",
+            #     name="joy_drive_node",
+            #     parameters=[{
+            #         "device_id": 1,
+            #     }],
+            # ),
             ComposableNode(
                 package="joy",
                 plugin="joy::Joy",
                 name="joy_arm_node",
                 parameters=[{
-                    "device_id": 1,
+                    "device_id": 0,
                 }],
                 remappings=[
                     ("/joy", "/joy1")
