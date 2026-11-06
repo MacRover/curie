@@ -37,21 +37,6 @@ ament_target_dependencies(
   control_toolbox
 )
 
-add_executable(move_joints movement_plans/move_joints.cpp)
-add_executable(move_zig_zag movement_plans/move_zig_zag.cpp)
-ament_target_dependencies(
-  move_joints
-  rclcpp
-  moveit_ros_planning_interface
-  geometry_msgs
-)
-ament_target_dependencies(
-  move_zig_zag
-  rclcpp
-  moveit_ros_planning_interface
-  geometry_msgs
-)
-
 # Export hardware plugins
 pluginlib_export_plugin_description_file(hardware_interface curie_arm_controller.xml)
 
@@ -65,12 +50,6 @@ install(TARGETS curie_arm_controller
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
-)
-
-install(TARGETS
-  move_joints
-  move_zig_zag
-  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY launch config

@@ -1,6 +1,6 @@
 #include "curie_hw_control/sparkmax_heartbeat.hpp"
 
-SparkMaxHeartbeat::SparkMaxHeartbeat(std::string name) : Node(name), roboRIO_(can_transport_), enabled(true)
+SparkMaxHeartbeat::SparkMaxHeartbeat(std::string name) : Node(name), roboRIO_(can_transport_), enabled(false)
 {
     this->declare_parameter("use_vcan", false);
     can_transport_.open(this->get_parameter("use_vcan").as_bool() ? "vcan0" : "can0");
