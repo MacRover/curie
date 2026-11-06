@@ -12,6 +12,9 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(curie_hw_control REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(control_toolbox REQUIRED)
 
 add_library(
   curie_arm_controller
@@ -31,6 +34,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_lifecycle
   curie_hw_control
+  control_toolbox
 )
 
 # Export hardware plugins

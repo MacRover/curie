@@ -12,6 +12,13 @@
 
 namespace hardware
 {
+    enum class SparkArmInitResult : int8_t
+    {
+        SUCCESS = 0,
+        CAN_OPEN_ERROR = -1,
+        DEVICE_COMMUNICATION_ERROR = -2
+    };
+    
     class SparkArmInterface : public HardwareInterface
     {
     public:

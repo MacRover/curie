@@ -2,10 +2,13 @@
 
 SOURCE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 BIN_PATH="src/curie_hw_control/lib/spark_mmrt/bin"
+DEPS="python3-colcon-common-extensions python3-rosdep libncurses5-dev libncursesw5-dev ros-humble-cyclonedds ros-humble-rmw-cyclonedds-cpp"
 
 # One time setup
 if [[ "$PATH" != *"$SOURCE_DIR/$BIN_PATH"* ]]; then
-    sudo apt update && sudo apt install python3-rosdep libncurses5-dev libncursesw5-dev ros-humble-cyclonedds ros-humble-rmw-cyclonedds-cpp -y
+    # First populate submodules before installing dependencies
+    git submodule update --init --recursive
+    sudo apt update && sudo apt install $DEPS -y
     sudo rosdep init
     rosdep update
     rosdep install --from-paths $SOURCE_DIR/src --ignore-src -y
@@ -18,6 +21,9 @@ if [[ "$PATH" != *"$SOURCE_DIR/$BIN_PATH"* ]]; then
     fi
     # Needed since moveit and nav2 uses Cyclone DDS
     echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> "$HOME/.bashrc"
+    
+    cp "$SOURCE_DIR/cyclonedds.xml.template" "$SOURCE_DIR/cyclonedds.xml"
+    echo "export CYCLONEDDS_URI=file://$SOURCE_DIR/cyclonedds.xml" >> "$HOME/.bashrc"
     
     echo "Setup complete, source your .bashrc for changes to take effect"
 else
