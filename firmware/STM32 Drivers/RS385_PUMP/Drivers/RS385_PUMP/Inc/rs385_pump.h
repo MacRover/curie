@@ -28,5 +28,4 @@ typedef struct {
 
 RS385_PUMP_StatusTypeDef RS385_PUMP_PumpEnable(RS385_PUMP_HandleTypeDef *pump);
 RS385_PUMP_StatusTypeDef RS385_PUMP_PumpDisable(RS385_PUMP_HandleTypeDef *pump);
-RS385_PUMP_StatusTypeDef RS385_PUMP_IsPumpActive(RS385_PUMP_HandleTypeDef *pump);
 #endif /* RS385_PUMP_INC_RS385_PUMP_H_ */
