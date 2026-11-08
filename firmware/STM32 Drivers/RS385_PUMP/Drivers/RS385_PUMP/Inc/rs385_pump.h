@@ -9,7 +9,7 @@
 #define RS385_PUMP_INC_RS385_PUMP_H_
 
 #include "stm32f1xx_hal.h"
-#include <stdbool.h> // TODO adam check this
+#include <stdbool.h> 
 
 
 typedef enum {
