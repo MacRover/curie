@@ -25,7 +25,8 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr string_sub_;
   rclcpp::Client<keyboard_interfaces::srv::KeyPose>::SharedPtr key_pose_client_;
   std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
-
+  std::shared_ptr<moveit::planning_interface::MoveGroupInterface> arm_pos_; // just bottom 3 joints
+  std::shared_ptr<moveit::planning_interface::MoveGroupInterface> wrist_; // just wrist roll and pitch
   std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> moveit_executor_;
   std::thread moveit_spin_thread_;
   std::thread typing_thread_;

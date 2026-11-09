@@ -20,6 +20,8 @@ void PoseSubscriberMover::init_moveit()
     auto moveit_node = std::make_shared<rclcpp::Node>("moveit_internal");
     move_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
         moveit_node, PLANNING_GROUP);
+    arm_pos_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(moveit_node, "arm_pos");
+    wrist_   = std::make_shared<moveit::planning_interface::MoveGroupInterface>(moveit_node, "wrist");
     moveit_executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
     moveit_executor_->add_node(moveit_node);
     moveit_spin_thread_ = std::thread([this]() {

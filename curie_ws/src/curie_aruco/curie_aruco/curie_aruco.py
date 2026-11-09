@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cv2
 import numpy as np
 from cv2 import aruco
@@ -10,8 +12,14 @@ import threading
 import time
 from keyboard_interfaces.srv import KeyPose
 
-# Pointing to the camera_calibration folder images to get array values for the camera's calibration
-camera_calibration, dist_coefficients = load_coefficients("/camera_calibration.yml")
+
+camera_calibration = np.array([
+    [883.41320896081095,   0.0, 330.58251882573597], 
+    [  0.0, 896.10682912443781, 345.72570801640973],  
+    [  0.0,   0.0,   1.0]   
+], dtype=np.float32)
+
+dist_coefficients = np.array([0.27921643041931032, -1.6546522818606531, 0.011809509595041566, -0.0063036426429370794, 4.3173948585896715], dtype=np.float32)
 
 W = 0.354
 H = 0.123
@@ -46,9 +54,10 @@ class MarkerDetectionSystem(Node):
 
         aruco_dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
         aruco_params = aruco.DetectorParameters()
+        aruco_params.minMarkerPerimeterRate = 0.13
         self.detector = aruco.ArucoDetector(aruco_dictionary, aruco_params)
 
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
         time.sleep(1.0)
         for _ in range(10):
             self.cap.read()
@@ -83,7 +92,7 @@ class MarkerDetectionSystem(Node):
             1.0 / 30.0, self.timer_callback,
             callback_group=self.timer_cb_group
         )
-
+        
         self.get_logger().info('MarkerDetectionSystem node started')
 
     def timer_callback(self):
@@ -92,8 +101,24 @@ class MarkerDetectionSystem(Node):
             self.get_logger().warn('Camera read failed', throttle_duration_sec=2.0)
             return
 
-        corners, ids, rejected = self.detector.detectMarkers(frame)
+        # xmin_top = 0
+        # ymin_top = 0 
+        # xmax_top = 640
+        # ymax_top = 100
+        # xmin_bot = 0
+        # ymin_bot = 380
+        # xmax_bot = 640 
+        # ymax_bot = 480 
 
+
+
+
+        # # 100, 100 works as a box for only top left
+        # ymin, ymax = 0, 100   #480 total y pixels   
+        # xmin, xmax = 0, 100   #640 total x pixels 
+        # roi = frame[ymin:ymax, xmin:xmax]
+        # replace frame with roi *** 
+        corners, ids, rejected = self.detector.detectMarkers(frame)
         # DEBUG: what did detectMarkers actually see this frame?
         id_list = ids.flatten().tolist() if ids is not None else []
         self.get_logger().info(
@@ -209,6 +234,7 @@ class MarkerDetectionSystem(Node):
             f"object_pts={len(object_pts)}, image_pts={len(image_pts)}",
             throttle_duration_sec=1.0
         )
+
 
         return (rvec, tvec) if success else (None, None)
 
