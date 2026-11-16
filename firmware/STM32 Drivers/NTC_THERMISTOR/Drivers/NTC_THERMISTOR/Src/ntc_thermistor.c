@@ -8,28 +8,38 @@
 #include "ntc_thermistor.h"
 
 float fast_ln(float x) {
-	// Lowkey this function was entirely given to me by AI
-	// If you think I like Taylor series, think again
-	// However this does intuitively make sense
-	// It's basically doing a Taylor series expansion and we are taking it on faith as a fast ln
 
-	// I mean I just put it into python versus ln and it works
+	// Step 1:
+	// Decompose x into mantissa m in range [0.5, 1.0) and base-2 exponent exp
+	// The conversion will be x = m * 2^exp
 
 	int exp;
 	float m = frexpf(x, &exp);
 
+	// Step 2:
+	// Transform m onto [-1/3, 0) using z = (m - 1) / (m + 1)
+	// Inverse identity is m = (1 + z) / (1 - z)
+	// ln both sides
+	// ln(m) = ln((1 + z) / (1 - z))
+	// |z| ,= 1/3 ensures the Taylor series below converges rapidly
 	// Range reduction: -1/3 <= z < 0
 	float z = (m - 1.0f) / (m + 1.0f);
 	float z2 = z * z;
 
+	// Step 3:
+	// Evaluate the odd-power Taylor series for ln((1 + z) / (1-z))
+	// 2 * (z + z^3/3 + z^5/5 + z^7/7 + z^9/9 + ...)
+	// Conversion through being factored out
 	// ln(m) ~= 2 * (z + z^3/3 + z^5/5 + ... + z^9/9)
-	float p = 0.11111111111f;
-	p = 0.14285714285f + z2 * p;
-	p = 0.20000000000f + z2 * p;
-	p = 0.33333333333f + z2 * p;
+	float p = 0.11111111111f;			// 1/9 (z^9 coefficient)
+	p = 0.14285714285f + z2 * p;		// 1/7 (z^7 coefficient)
+	p = 0.20000000000f + z2 * p;		// 1/5 (z^5 coefficient)
+	p = 0.33333333333f + z2 * p;		// 1/3 (z^3 coefficient)
 
 	float ln_m = 2.0f * z * (1.0f + z2 * p);
 
+	// Step 4: Recombine mantissa log with exponent log
+	// 0.69314718f = ln(2)
 	return ln_m + (float)exp * 0.69314718f;
 
 }
@@ -41,6 +51,10 @@ NTC_THERMISTOR_ADCStatusTypeDef NTC_THERMISTOR_ReadADCValue(NTC_THERMISTOR_Handl
 	}
 
 	// 1. Trigger the ADC
+
+	if (HAL_ADC_ConfigChannel(hadc, &device->sConfig) != HAL_OK) {
+		return ADC_ERROR;
+	}
 
 	if (HAL_ADC_Start(hadc) != HAL_OK) {
 		return ADC_ERROR;

@@ -38,6 +38,11 @@ typedef struct {
 	float beta;
 
 	uint32_t adc_raw;
+
+	/* ADC parameters */
+
+	ADC_ChannelConfTypeDef sConfig;
+
 } NTC_THERMISTOR_HandleTypeDef;
 
 // Functions needed
