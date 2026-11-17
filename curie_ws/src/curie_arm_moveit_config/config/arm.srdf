@@ -33,6 +33,15 @@
     <group_state name="open" group="hand">
         <joint name="gripper" value="1"/>
     </group_state>
+    <group name="arm_pos"> 
+        <chain base_link="base_link" tip_link="wrist_link"/> 
+    </group> 
+
+    <group name="wrist"> 
+        <joint name="wrist_pitch_joint"/>
+        <joint name="wrist_roll_joint"/> 
+    </group> 
+    <!-- I think we can use wrist link here but we may have to make another like fake link so that it isn't affected-->
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="hand" parent_link="endeffector_link" group="hand"/>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
