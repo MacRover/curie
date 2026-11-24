@@ -282,6 +282,34 @@
       effort="5"
       velocity="5" />
   </joint>
+  <link  
+    name="camera_link">
+  </link> 
+  <joint
+    name="camera_joint"
+    type="fixed">
+    <origin
+      xyz="1.12044955973695E-06 0.00873566776571755 -0.0834691422790301"
+      rpy="0 0 0" />
+    <parent 
+      link="endeffector_link" />
+    <child  
+      link="camera_link" /> 
+  </joint>
+  <link  
+    name="camera_optical_frame"> 
+  </link> 
+  <joint 
+    name="camera_optical_frame_joint" 
+    type="fixed">
+    <origin 
+      xyz="0 0 0"
+      rpy="-1.57078 0 -1.5708" /> 
+    <parent
+      link="camera_link" /> 
+    <child
+      link="camera_optical_frame" /> 
+  </joint> 
   <link
     name="endeffector_link">
     <inertial>
