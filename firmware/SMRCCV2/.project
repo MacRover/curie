@@ -29,4 +29,11 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>Drivers/RS385_PUMP</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/STM32%20Drivers/RS385_PUMP/Drivers/RS385_PUMP</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>
