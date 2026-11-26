@@ -144,6 +144,7 @@ hardware_interface::CallbackReturn CurieArmController::on_deactivate(
 hardware_interface::return_type CurieArmController::read(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
     (void)time;
+    static uint8_t runs = 0;
 
     if (arm_hardware_.read(static_cast<void*>(&status_)) < 0)
     {
@@ -163,25 +164,27 @@ hardware_interface::return_type CurieArmController::read(const rclcpp::Time & ti
 
             joint_lpfs_[i].configure();
         }
+        // Compute sampling rate over a few cycles at the beginning to ensure we get a stable reading of period
+        if (runs++ > 5)
+        {
+            RCLCPP_INFO(
+                rclcpp::get_logger("ArmSystem"),
+                "LPF damping frequencies: base=%.1f Hz, shoulder=%.1f Hz, elbow=%.1f Hz, wrist_pitch=%.1f Hz, wrist_roll=%.1f Hz, gripper=%.1f Hz",
+                lpf_damping_frequencies_[0],
+                lpf_damping_frequencies_[1],
+                lpf_damping_frequencies_[2],
+                lpf_damping_frequencies_[3],
+                lpf_damping_frequencies_[4],
+                lpf_damping_frequencies_[5]);
 
-        RCLCPP_INFO(
-            rclcpp::get_logger("ArmSystem"),
-            "Encoder LPF configured: sampling=%.1f Hz, intensity=%.1f",
-            sampling_frequency,
-            lpf_damping_intensity_);
-
-        
-        RCLCPP_INFO(
-            rclcpp::get_logger("ArmSystem"),
-            "LPF damping frequencies: base=%.1f Hz, shoulder=%.1f Hz, elbow=%.1f Hz, wrist_pitch=%.1f Hz, wrist_roll=%.1f Hz, gripper=%.1f Hz",
-            lpf_damping_frequencies_[0],
-            lpf_damping_frequencies_[1],
-            lpf_damping_frequencies_[2],
-            lpf_damping_frequencies_[3],
-            lpf_damping_frequencies_[4],
-            lpf_damping_frequencies_[5]);
-
-        lpf_configured_ = true;
+            RCLCPP_INFO(
+                rclcpp::get_logger("ArmSystem"),
+                "Encoder LPF configured: sampling=%.1f Hz, intensity=%.1f",
+                sampling_frequency,
+                lpf_damping_intensity_);
+                
+            lpf_configured_ = true;
+        }
     }
 
     // Convert raw encoder positions from degrees to radians
